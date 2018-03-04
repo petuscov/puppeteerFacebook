@@ -8,15 +8,15 @@ const credentials = require("./credentials.js");
 
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
-  await page.goto('https://www.messenger.com/login.php').catch(error => console.log(error));
+  await page.goto('https://www.messenger.com/login.php');
   //await page.waitForNavigation({timeout: 5000}).catch(error => console.log(error));
-  await page.click("#email").catch(error => console.log(error));
-  await page.keyboard.type(credentials.username).catch(error => console.log(error));
-  await page.click('#pass').catch(error => console.log(error)); 
-  await page.keyboard.type(credentials.password).catch(error => console.log(error));
+  await page.click("#email");
+  await page.keyboard.type(credentials.username);
+  await page.click('#pass'); 
+  await page.keyboard.type(credentials.password);
   const [response] = await Promise.all([
-    await page.click('#loginbutton').catch(error => console.log(error)),
-    await page.waitForNavigation().catch(error => console.log(error))
+    await page.click('#loginbutton'),
+    await page.waitForNavigation()
   ]);
 
   /*//Now we are logged and we can do:
@@ -53,10 +53,15 @@ const credentials = require("./credentials.js");
 function getIdBot(botName,page){
   return new Promise(function(resolve,reject){
     (async ()=>{
-      await page.goto('https://www.messenger.com/t/'+botName).catch(error => console.log(error));
+      await page.goto('https://www.messenger.com/t/'+botName);
       var botonStart = await page.$("a[href='#']:not([tabindex]):not([aria-label])");
-      await botonStart.click().catch(error => console.log(error)); //boton de iniciar conversacion, no responde bien cuando está ya iniciada
-      var selectorBot = await page.waitFor("div[id^='row_header_id_user']");
+      var selectorBot;
+      if(botonStart){ //boton de iniciar conversacion, cuando está ya iniciada no aparece.
+        await botonStart.click(); 
+        selectorBot = await page.waitFor("div[id^='row_header_id_user']");
+      }else{
+        selectorBot = await page.$("div[id^='row_header_id_user']");
+      }
       var idSelector = selectorBot._remoteObject.description.split('#')[1];
       var idBot = idSelector.split(":")[1].split(".")[0];
       resolve(idBot);
