@@ -1,4 +1,4 @@
-"use strict";
+"use strict"; //><
 
 const puppeteer = require("puppeteer");
 const credentials = require("./credentials.js");
@@ -6,11 +6,12 @@ const credentials = require("./credentials.js");
 
 (async () => {
 
-  const browser = await puppeteer.launch({executablePath:
-    "./node_modules/chromium/lib/chromium/chrome-linux/chrome",//
-    headless: true//
+  const browser = await puppeteer.launch({
+    //executablePath:"./node_modules/chromium/lib/chromium/chrome-linux/chrome",//
+    //headless: true//
   });
-  const page = await browser.newPage();
+  const page = await browser.newPage(); 
+  page.on('console', console.log); //Para poder hacer console.log dentro de .evaluate()
   /*var cookies = await page.cookies('https://www.messenger.com/login.php');
   console.log(cookies);
   cookies.forEach(function(element,index){
@@ -47,8 +48,9 @@ const credentials = require("./credentials.js");
 
   //await page.screenshot({path: 'archivedConv.png'});
   
-  var arrayMessagesUnprocessed = await writeMessage(page,"holis");
-  
+  var arrayMessagesUnprocessed = await writeMessage(page,"holis").then((res)=>{console.log(res.time);res.nodes.forEach(function(element){console.log(element);});});
+  //TODO.: guardar el tiempo junto el mensaje que ha originado la respuesta, para reflejarlos juntos. (distinguir ante que mensajes se tarda más).
+
   await page.screenshot({path: 'msgsReceived.png'});
 
 
@@ -115,77 +117,121 @@ function closeCurrentBotConversation(page){
  */
 
 function writeMessage(page,msg){
+
 return new Promise(function(resolve,reject){
     (async ()=>{
       
       var messagePlace = await page.$("div[role='region'][aria-label='Messages']");
       var comboBox = await page.$("div[role='combobox']");
       await comboBox.type(msg);
-      var arrayMessagesUnprocessed = [];
-      var timestamp1 = new Date();
-      var elapsedTime;
+      //var timestamp1 = new Date(); //Comenzar a contar justo antes de pulsar enter?
       await comboBox.press('Enter');
     
-      setTimeout(()=>{page.screenshot({path: 'msgSent.png'});},200);
+      //setTimeout(()=>{page.screenshot({path: 'msgSent.png'});},200);
       //we have to ignore our msg, and process bot ones.
-  
       
-      
-      var result = await page.evaluate(function(){
-        //TODO promise was collected undefined. Revisar si en .evaluate hay que usar await y page.$ o document.querySelect.
-        return new Promise(function(resolve,reject){
-          (async ()=>{
-            var box = await page.$("div[role='presentation']");
-            var closerBox = await box.$("div[role='region']");
-            var messagesBox = await closerBox.$("div[id]");
-            var insertedNodes = [];
-            var firstMessage = false;
-            var settedTimeouts = [];
-            var mutationObserver = new MutationObserver(function(mutations) {
-              mutations.forEach(function(mutation) {
+      var result = await page.evaluate(function(){//timestamp1){
 
-                if(!firstMessage){
-                  if(mutation.addedNodes.length>=1 && mutation.addedNodes[0].nodeName === "DIV"){firstMessage=true;}
-                }else{
-                  if(mutation.addedNodes.length>=1 && mutation.addedNodes[0].nodeName === "DIV"){ 
-                    if(!elapsedTime){var elapsedTime = (new Date()-timestamp1)/1000;} //referencia temporal primer mensaje devuelto por el bot.
-                    insertedNodes.concat(mutation.addedNodes);
-                    var temporizer = setTimeout(()=>{
-                      if(settedTimeouts.length === 1){
-                        mutationObserver.disconnect();
-                        resolve({time: elapsedTime,nodes: insertedNodes})
-                      }else{
-                        settedTimeouts.pop();
-                      }
-                    },3000);
-                    settedTimeouts.push(true);
-                  }
-                }
-              });
+        /**
+         * @param  {unprocessedNode} - DOM node, correspondent with a message/element received unprocessed.
+         * @return {Array[Object]} All data about the messages in the node, If message is a simple text, *text* type, the string and a flag determining 
+         * if it contains emoticons, if is an image or an audio, it is represented by *image* or *audio* type. If is a 
+         * button/list of button, *button* type, its text and the elementHandle that can be clicked.
+        */
+        function processNode(unprocessedNode){
+          //TODO flag indicadora de emojis en textos.
+          //unprocessedNode = unprocessedNode.asElement();
+          var arrObjs = [];
+          /*si llega más de un mensaje en un nodo es porque el bot ha usado una plantilla para responder.
+           Dentro de un mismo nodo vamos a ignorar el orden de los mensajes.*/ 
+          var pres = unprocessedNode.querySelector("div[role='presentation']");
+          if(pres){
+            var photo = pres.querySelector("img");
+            var obj = {type: "image", url: photo.src };
+            arrObjs.push(obj);
+          }
+          var message = unprocessedNode.querySelector("span");
+          if(message){
+            var obj = {type: "text", message: message.innerText };
+            arrObjs.push(obj);
+          }
+          var buttons = unprocessedNode.querySelectorAll("a[href='#']");
+          if(buttons){
+            buttons.forEach((button)=>{ //no podemos devolver el nodo o el elemento clickable.
+              var obj = {
+                type: "button",
+                message:  button.innerText
+              };
+              arrObjs.push(obj);
             });
-            mutationObserver.observe(messagesBox, { childList: true });
-            setTimeout(()=>{
-              if(settedTimeouts.length===0){
-                mutationObserver.disconnect(); resolve({time: 30000,nodes: insertedNodes});
-              }
-            },30000);
-          })();
+          }  
+          return arrObjs;
+        }
+        
+        //TODO// ¿Se pueden observar cambios sin evaluate y MutationObserver???
+        /*con waitForNavigation NO:
+        If at the moment of calling the method the selector already exists, the method will return immediately.
+         If the selector doesn't appear after the timeout milliseconds of waiting, the function will throw.*/
+        return new Promise(function(resolve,reject){
+          
+          var box = document.querySelector("div[role='presentation']");
+          var closerBox = box.querySelector("div[role='region']");
+          var messagesBox = closerBox.querySelector("div[id]");
+          //console.log(messagesBox); //JSHanlde node (elementHanlde extiende JSHandle)
+          var elapsedTime;
+          var insertedNodes = [];
+          var processedNodes = [];
+          //var firstMessage = false; 
+          var settedTimeouts = [];
+          var timestamp1 = new Date();
+
+          var mutationObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+              //if(!firstMessage){ //no hace falta tratar el primer mensaje porque llega antes de que entremos en page.evaluate. (TODO. siempre así?)
+              //  if(mutation.addedNodes.length===1 && mutation.addedNodes[0].nodeName === "DIV"){firstMessage=true;} // >= 1 ó === 1 ?
+              //}else{
+                if(mutation.addedNodes.length===1 && mutation.addedNodes[0].nodeName === "DIV"){ 
+                  if(!elapsedTime){var elapsedTime = (new Date()-timestamp1)/1000;} //referencia temporal primer mensaje devuelto por el bot.
+                  insertedNodes = insertedNodes.concat(mutation.addedNodes[0]);
+                  var temporizer = setTimeout(()=>{
+                    if(settedTimeouts.length === 1){
+                      mutationObserver.disconnect();
+                      try{
+                        processedNodes = insertedNodes.map((node)=>{return processNode(node)});
+                      }catch(err){
+                        console.log(err);
+                      };
+                      resolve({time: elapsedTime,nodes: processedNodes});
+                    }else{
+                      settedTimeouts.pop();
+                    }
+                  },3000);
+                  settedTimeouts.push(true);
+                }
+              //}
+            });
+          });
+          mutationObserver.observe(messagesBox, { childList: true });
+          setTimeout(()=>{
+            console.log("reached 30secs.");
+            if(settedTimeouts.length===0){
+              try{
+                processedNodes = insertedNodes.map((node)=>{return processNode(node)});       
+              }catch(err){
+                console.log(err);
+              };
+              mutationObserver.disconnect(); resolve({time: 30000,nodes: processedNodes});
+            }
+          },30000);
+         
         });
-      });
-      
-    
-      resolve(res);
+      });//,timestamp1);
+
+      resolve(result);
       
     })();
   });
 }
 
-/**
- * @param  {ElementHandle} - Puppeteer API ElementHandle instance, correspondent with a message/element received.
- * @return {Object} All data about the message, If is a simple text, *text* type, the string and a flag determining 
- * if it contains emoticons, if is an image or an audio, it is represented by *image* or *audio* type. If is a 
- * button/list of button, *button* type, its text and the elementHandle that can be clicked.
-*/
-function processElementHandle(elementHandle){
-  return elementHandle.toString().slice(0,20);//temporal.
-}
+
+

@@ -4,8 +4,8 @@
   "description": "",
   "main": "indexFacebook.js",
   "dependencies": {
-    "puppeteer": "^1.1.0",
-    "chromium": "^1.0.2"
+    "chromium": "^1.0.2",
+    "puppeteer": "^1.1.0"
   },
   "devDependencies": {},
   "scripts": {
