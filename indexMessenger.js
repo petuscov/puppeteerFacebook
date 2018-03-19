@@ -2,13 +2,12 @@
 
 const puppeteer = require("puppeteer");
 const credentials = require("./credentials.js");
-//const MutationObserver = require('mutation-observer');
 
 (async () => {
 
   const browser = await puppeteer.launch({
-    //executablePath:"./node_modules/chromium/lib/chromium/chrome-linux/chrome",//
-    //headless: true//
+    executablePath:"./node_modules/chromium/lib/chromium/chrome-linux/chrome",//
+    headless: true//
   });
   const page = await browser.newPage(); 
   page.on('console', console.log); //Para poder hacer console.log dentro de .evaluate()
@@ -113,7 +112,8 @@ function closeCurrentBotConversation(page){
  * @param  {String} - Message to send to bot.
  * @return {Object}
  *    @return {int} - Time the bot needs to send first message. We wait for more messages 1 second after last one.
- *    @return {Array[ElementHandle]} - Array of  'ElementHandle' instances, correspondent with each received message/element.
+ *    @return {Array[Object]} - Array of Object, each one correspondant with each received message/element, processed.
+ *    @return {Array[ElementHandle]} - Array of elements, each one correspondant with each button added to the DOM. 
  */
 
 function writeMessage(page,msg){
@@ -138,7 +138,7 @@ return new Promise(function(resolve,reject){
          * if it contains emoticons, if is an image or an audio, it is represented by *image* or *audio* type. If is a 
          * button/list of button, *button* type, its text and the elementHandle that can be clicked.
         */
-        function processNode(unprocessedNode){
+        function processNodeData(unprocessedNode){
           //TODO flag indicadora de emojis en textos.
           //unprocessedNode = unprocessedNode.asElement();
           var arrObjs = [];
@@ -167,7 +167,20 @@ return new Promise(function(resolve,reject){
           }  
           return arrObjs;
         }
-        
+        /**
+         * @param  {unprocessedNode} - DOM node, correspondent with a message/element received unprocessed.
+         * @return {Array[ElementHandle]} Button that can be clickable.
+        */
+        function processNodeData(unprocessedNode){
+          var arrButtons = [];
+          var buttons = unprocessedNode.querySelectorAll("a[href='#']");
+          if(buttons){
+            buttons.forEach((button)=>{ //¿¿podemos devolver el nodo o el elemento clickable para pulsar luego??
+              arrObjs.push(button);
+            });
+          }  
+          return arrButtons;
+        }
         //TODO// ¿Se pueden observar cambios sin evaluate y MutationObserver???
         /*con waitForNavigation NO:
         If at the moment of calling the method the selector already exists, the method will return immediately.
@@ -197,11 +210,12 @@ return new Promise(function(resolve,reject){
                     if(settedTimeouts.length === 1){
                       mutationObserver.disconnect();
                       try{
-                        processedNodes = insertedNodes.map((node)=>{return processNode(node)});
+                        processedNodes = insertedNodes.map((node)=>{return processNodeData(node)});
+                        processedButtons = insertedNodes.map((node)=>{return processButtons(node)});
                       }catch(err){
                         console.log(err);
                       };
-                      resolve({time: elapsedTime,nodes: processedNodes});
+                      resolve({time: elapsedTime,nodes: processedNodes,buttons: processButtons});
                     }else{
                       settedTimeouts.pop();
                     }
