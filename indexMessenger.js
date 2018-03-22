@@ -2,7 +2,7 @@
 
 const puppeteer = require("puppeteer");
 const credentials = require("./credentials.js");
-
+//const regExpEmojis = require("./helper.js").regExpEmojis;
 (async () => {
 
   const browser = await puppeteer.launch({
@@ -47,11 +47,30 @@ const credentials = require("./credentials.js");
 
   //await page.screenshot({path: 'archivedConv.png'});
   
-  var arrayMessagesUnprocessed = await writeMessage(page,"holis").then((res)=>{console.log(res.time);res.nodes.forEach(function(element){console.log(element);});});
+  
+  var arrayMessagesUnprocessed = await writeMessage(page,"holis").then((res)=>{
+    console.log(res.time);
+    res.nodes.forEach(function(element){
+      console.log(element);
+    });
+    return res;
+  });
+  var arrBotones = [];
+  var arrPaths = [];
+  arrayMessagesUnprocessed.nodes.forEach(function(element){
+    if(element.type === "button"){
+      arrPaths.push(element.path); 
+    }
+  });
+  if(arrPaths.length){
+    var boton = await page.$(arrPaths[0]);
+    await boton.click(); //¿¿¿???
+  }
+ 
   //TODO.: guardar el tiempo junto el mensaje que ha originado la respuesta, para reflejarlos juntos. (distinguir ante que mensajes se tarda más).
 
-  await page.screenshot({path: 'msgsReceived.png'});
-
+  //await page.screenshot({path: 'msgsReceived.png'}); //TODO fixear ese panel
+  await page.screenshot({path: 'correctButton.png'});
 
   //await closeCurrentBotConversation(page);
   browser.close();
@@ -131,7 +150,8 @@ return new Promise(function(resolve,reject){
       //we have to ignore our msg, and process bot ones.
       
       var result = await page.evaluate(function(){//timestamp1){
-
+        var regExpEmojis = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|[\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|[\ud83c[\ude32-\ude3a]|[\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
+        //console.log("EMOJIFLAG"+ regExpEmojis.test('🏄'));
         /**
          * @param  {unprocessedNode} - DOM node, correspondent with a message/element received unprocessed.
          * @return {Array[Object]} All data about the messages in the node, If message is a simple text, *text* type, the string and a flag determining 
@@ -152,7 +172,8 @@ return new Promise(function(resolve,reject){
           }
           var message = unprocessedNode.querySelector("span");
           if(message){
-            var obj = {type: "text", message: message.innerText };
+            var obj = {type: "text", message: message.innerText, emojiFlag: regExpEmojis.test(message.innerText)
+            };
             arrObjs.push(obj);
           }
           var buttons = unprocessedNode.querySelectorAll("a[href='#']");
@@ -160,7 +181,8 @@ return new Promise(function(resolve,reject){
             buttons.forEach((button)=>{ //no podemos devolver el nodo o el elemento clickable.
               var obj = {
                 type: "button",
-                message:  button.innerText
+                message:  button.innerText,emojiFlag: regExpEmojis.test(button.innerText),
+                path: getPath(button)
               };
               arrObjs.push(obj);
             });
@@ -169,18 +191,54 @@ return new Promise(function(resolve,reject){
         }
         /**
          * @param  {unprocessedNode} - DOM node, correspondent with a message/element received unprocessed.
-         * @return {Array[ElementHandle]} Button that can be clickable.
+         * @return {Array[String]} String query to select ElementHandle Button that can be clickable.
         */
-        function processNodeData(unprocessedNode){
-          var arrButtons = [];
-          var buttons = unprocessedNode.querySelectorAll("a[href='#']");
-          if(buttons){
-            buttons.forEach((button)=>{ //¿¿podemos devolver el nodo o el elemento clickable para pulsar luego??
-              arrObjs.push(button);
-            });
-          }  
-          return arrButtons;
+        
+        getPath =  function (node) { //TODO pulir..
+          /*
+          var path;
+          while (node) {
+            var name = node.localName;
+            if (!name) break;
+            name = name.toLowerCase();
+            var parent = node.parentNode;
+            var sameTagSiblings = parent.children;
+            if (sameTagSiblings.length > 1) { 
+              var count = 0, index;
+              for(var element in sameTagSiblings){
+                if(sameTagSiblings[element] === node){
+                  index = count;
+                }
+                count++;
+              }
+              if (index > 1) {
+                name += ':nth-child(' + index + ')';
+              }
+            }
+            path = name + (path ? '>' + path : '');
+            node = parent;
+          }
+          return path;*/
+
+          // span#cch_f1d234bca27bd ciertos ids... (igual desde puppeteer los paths son correctos, TODO comprobar.)
+          var el = node;
+          if (!(el instanceof Element)) return;
+          var path = [];
+          while (el.nodeType === Node.ELEMENT_NODE) {
+              var selector = el.nodeName.toLowerCase();
+              if (el.id) {
+                  selector += '#' + el.id;
+              } else {
+                  var sib = el, nth = 1;
+                  while (sib.nodeType === Node.ELEMENT_NODE && (sib = sib.previousSibling) && nth++);
+                  selector += ":nth-child("+nth+")";
+              }
+              path.unshift(selector);
+              el = el.parentNode;
+          }
+          return path.join(" > ");
         }
+
         //TODO// ¿Se pueden observar cambios sin evaluate y MutationObserver???
         /*con waitForNavigation NO:
         If at the moment of calling the method the selector already exists, the method will return immediately.
@@ -188,6 +246,7 @@ return new Promise(function(resolve,reject){
         return new Promise(function(resolve,reject){
           
           var box = document.querySelector("div[role='presentation']");
+          var buttons = box.querySelectorAll("a[href='#']");
           var closerBox = box.querySelector("div[role='region']");
           var messagesBox = closerBox.querySelector("div[id]");
           //console.log(messagesBox); //JSHanlde node (elementHanlde extiende JSHandle)
@@ -211,11 +270,10 @@ return new Promise(function(resolve,reject){
                       mutationObserver.disconnect();
                       try{
                         processedNodes = insertedNodes.map((node)=>{return processNodeData(node)});
-                        processedButtons = insertedNodes.map((node)=>{return processButtons(node)});
                       }catch(err){
                         console.log(err);
                       };
-                      resolve({time: elapsedTime,nodes: processedNodes,buttons: processButtons});
+                      resolve({time: elapsedTime,nodes: processedNodes});
                     }else{
                       settedTimeouts.pop();
                     }
@@ -228,14 +286,14 @@ return new Promise(function(resolve,reject){
           mutationObserver.observe(messagesBox, { childList: true });
           setTimeout(()=>{
             console.log("reached 30secs.");
-            if(settedTimeouts.length===0){
+            //if(settedTimeouts.length===0){
               try{
                 processedNodes = insertedNodes.map((node)=>{return processNode(node)});       
               }catch(err){
                 console.log(err);
               };
               mutationObserver.disconnect(); resolve({time: 30000,nodes: processedNodes});
-            }
+            //}
           },30000);
          
         });
