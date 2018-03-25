@@ -6,8 +6,8 @@ const credentials = require("./credentials.js");
 (async () => {
 
   const browser = await puppeteer.launch({
-    executablePath:"./node_modules/chromium/lib/chromium/chrome-linux/chrome",//
-    headless: true//
+    //executablePath:"./node_modules/chromium/lib/chromium/chrome-linux/chrome",//
+    //headless: true//
   });
   const page = await browser.newPage(); 
   page.on('console', console.log); //Para poder hacer console.log dentro de .evaluate()
@@ -40,6 +40,7 @@ const credentials = require("./credentials.js");
 
 
   var botName = "WSL";
+  await page.screenshot({path: 'initialCap.png'});
   
   var idBot = await getIdBot(botName,page);
   console.log(idBot);
@@ -47,24 +48,26 @@ const credentials = require("./credentials.js");
 
   //await page.screenshot({path: 'archivedConv.png'});
   
-  
-  var arrayMessagesUnprocessed = await writeMessage(page,"holis").then((res)=>{
+  var arrayMessagesUnprocessed = await writeMessage(page,"holis");
+  /*.then((res)=>{
     console.log(res.time);
     res.nodes.forEach(function(element){
       console.log(element);
     });
     return res;
-  });
+  });*/
   var arrBotones = [];
   var arrPaths = [];
-  arrayMessagesUnprocessed.nodes.forEach(function(element){
+  arrayMessagesUnprocessed.nodes[0].forEach(function(element){
     if(element.type === "button"){
       arrPaths.push(element.path); 
+      console.log("YAY");
     }
   });
   if(arrPaths.length){
     var boton = await page.$(arrPaths[0]);
-    await boton.click(); //¿¿¿???
+    await page.screenshot({path: 'buttonNotPressed.png'});
+    await boton.click();
   }
  
   //TODO.: guardar el tiempo junto el mensaje que ha originado la respuesta, para reflejarlos juntos. (distinguir ante que mensajes se tarda más).
@@ -91,7 +94,7 @@ function getIdBot(botName,page){
   return new Promise(function(resolve,reject){
     (async ()=>{
       await page.goto('https://www.messenger.com/t/'+botName);
-      var botonStart = await page.$("a[href='#']:not([tabindex]):not([aria-label]):not([id])");
+      var botonStart = await page.$("a[href='#']:not([tabindex]):not([aria-label]):not([id]):not([role='button'])");
       var selectorBot;
   
       if(botonStart){ //boton de iniciar conversacion, cuando está ya iniciada no aparece.
@@ -139,7 +142,7 @@ function writeMessage(page,msg){
 
 return new Promise(function(resolve,reject){
     (async ()=>{
-      
+      //await new Promise(function(resolve,reject){setTimeout(resolve,200)});
       var messagePlace = await page.$("div[role='region'][aria-label='Messages']");
       var comboBox = await page.$("div[role='combobox']");
       await comboBox.type(msg);
@@ -172,7 +175,7 @@ return new Promise(function(resolve,reject){
           }
           var message = unprocessedNode.querySelector("span");
           if(message){
-            var obj = {type: "text", message: message.innerText, emojiFlag: regExpEmojis.test(message.innerText)
+            var obj = {type: "text", message: message.innerText, emojiFlag: regExpEmojis.test(message.innerHTML)
             };
             arrObjs.push(obj);
           }
