@@ -5,6 +5,7 @@
   "main": "indexFacebook.js",
   "dependencies": {
     "chromium": "^1.0.2",
+    "mysql": "^2.15.0",
     "puppeteer": "^1.1.0"
   },
   "devDependencies": {},
