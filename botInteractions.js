@@ -30,13 +30,14 @@ function closeCurrentBotConversation(page){
       var botonMenu = await divPreButton.$("div[role='button']"); 
       await botonMenu.click();
       var menuConv = await page.waitFor("div[class='uiContextualLayerPositioner uiLayer']:not([class='hidden_elem'])");
-      var actions = await menuConv.$$("li[role='presentation']");
+      console.log("hi");
+      var actions = await menuConv.$$("li[role='presentation']").catch(()=>{page.screenshot({path: "./errors/closingError.png"})});
       var archiveConv = actions[2]; //archive index1, delete index2
       await page.waitFor(250);
       await archiveConv.click();
       await page.waitFor(250);
       var modalConfirmDelete = await page.$("div[class='clearfix']");
-      var modalButtons = await modalConfirmDelete.$$("button");
+      var modalButtons = await modalConfirmDelete.$$("button").catch(()=>{page.screenshot({path: "./errors/closingError2.png"})});
       await modalButtons[1].click(); //el botón central es el de confirmar.
       resolve();
     })();
