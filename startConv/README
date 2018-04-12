@@ -1,0 +1,3 @@
+Carpeta para almacenar capturas de bots que no poseen botón inicial "Get Started" o "Empezar".
+
+También se recogerán capturas de bots con los que ya se haya iniciado una conversación. Al terminar de trabajar con un bot hay que cerrar la conversación con este SIEMPRE. Si no se hace es un error.
