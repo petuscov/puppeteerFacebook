@@ -9,10 +9,15 @@
 function startBotConversation(botName,page){
   return new Promise(function(resolve,reject){
     (async ()=>{
-      await page.goto('https://www.messenger.com/t/'+botName);
+      await Promise.all([
+        await page.goto('https://www.messenger.com/t/'+botName),
+        await page.waitForNavigation({timeout:2000}).catch(function(res){console.log("no need to wait on bot connection.");}) //innecesario, nunca ha hecho falta.
+      ]);
       var botonStart = await page.$("a[href='#']:not([tabindex]):not([aria-label]):not([id]):not([role='button'])");
       if(botonStart){ //boton de iniciar conversacion, cuando está ya iniciada no aparece.
         await botonStart.click(); 
+      }else{
+        reject();
       }
       resolve();
     })();
@@ -30,14 +35,13 @@ function closeCurrentBotConversation(page){
       var botonMenu = await divPreButton.$("div[role='button']"); 
       await botonMenu.click();
       var menuConv = await page.waitFor("div[class='uiContextualLayerPositioner uiLayer']:not([class='hidden_elem'])");
-      console.log("hi");
-      var actions = await menuConv.$$("li[role='presentation']").catch(()=>{page.screenshot({path: "./errors/closingError.png"})});
+      var actions = await menuConv.$$("li[role='presentation']").catch(()=>{reject();});
       var archiveConv = actions[2]; //archive index1, delete index2
       await page.waitFor(250);
       await archiveConv.click();
       await page.waitFor(250);
       var modalConfirmDelete = await page.$("div[class='clearfix']");
-      var modalButtons = await modalConfirmDelete.$$("button").catch(()=>{page.screenshot({path: "./errors/closingError2.png"})});
+      var modalButtons = await modalConfirmDelete.$$("button").catch(()=>{reject();});
       await modalButtons[1].click(); //el botón central es el de confirmar.
       resolve();
     })();
@@ -49,13 +53,13 @@ function closeCurrentBotConversation(page){
  * @param  {Page} - Puppeteer API Page instance.
  * @return {String} - Bot id.
  **
- * Starts conversation if it has not been started.
+ * Starts conversation if it has not been started. If it has been started returns a reject, we dont take things for granted.
  */
 function getIdBot(botName,page){
   return new Promise(function(resolve,reject){
     (async ()=>{
       
-      await page.goto('https://www.messenger.com/t/'+botName,{timeout:5000}).catch(function(res){console.log("no need to wait.");}) //en pc pueblo no hace falta nunca, aquí a veces.)
+      await page.goto('https://www.messenger.com/t/'+botName,{timeout:5000}).catch(function(res){console.log("no need to wait on accesing bot.");}) //en pc pueblo no hace falta nunca, aquí a veces.)
       //Cannot find context with specified id undefined cuando error anterior.
       var botonStart = await page.$("a[href='#']:not([tabindex]):not([aria-label]):not([id]):not([role='button'])").catch(function(err){console.log(err)});
       var selectorBot;
@@ -67,8 +71,13 @@ function getIdBot(botName,page){
       /*Es necesario que la conversación esté en la lista de conversaciones, 
         se puede dar el caso en el que esta se archive, y no se muestre botón de "Get Started" 
         puesto que ya está iniciada, pero no se muestre en la lista de conversaciones. */
-        await page.screenshot({path:"./conversationAlreadyInitiated.png"});
-        selectorBot = await page.$("div[id^='row_header_id_user']");
+        
+        //selectorBot = await page.$("div[id^='row_header_id_user']");
+        //no vamos a dar por hecho que la conversación ya se ha iniciado. 
+        //Si llegamos aquí es porque la conversación ha sido iniciada previamente (error) o porque no se puede interactuar con el bot.
+        //(e.g) samsung.mobile.319 (you and samsung mobile are not connected in facebook).
+        await page.screenshot({path: "./startConv/responded"+botName+".png"});
+        reject("cant interact with bot or conversation has been already initiated. Screenshot in startConv folder");
       }
           
       var idSelector = selectorBot._remoteObject.description.split('#')[1];
@@ -91,7 +100,8 @@ function writeMessage(page,msg){
       var comboBox = await page.$("div[role='combobox']");
       await comboBox.type(msg);
       //var timestamp1 = new Date(); //Comenzar a contar justo antes de pulsar enter?
-      await comboBox.press('Enter');
+      await page.keyboard.press('Enter');  //Ó comboBox.press('Enter'). 
+      resolve();
     })();
   });
 }
@@ -119,66 +129,102 @@ function listenBotResponse(page){
          * button/list of button, *button* type, its text and the elementHandle that can be clicked.
         */
         function processNodeData(unprocessedNode){
-          //TODO flag indicadora de emojis en textos.
-          //unprocessedNode = unprocessedNode.asElement();
+          if(!unprocessedNode){return [];}
           var arrObjs = [];
-          /*si llega más de un mensaje en un nodo es porque el bot ha usado una plantilla para responder.
-           Dentro de un mismo nodo vamos a ignorar el orden de los mensajes.*/ 
+          /*si llega más de un mensaje en un nodo es porque el bot ha usado una plantilla para responder.*/ 
+
+          //procesamos imágenes normales
           var pres = unprocessedNode.querySelector("div[role='presentation']");
           if(pres){
-            var photo = pres.querySelector("img");
+            var photo = pres.querySelector("img"); 
             var obj = {type: "image", url: photo.src };
             arrObjs.push(obj);
           }
-          var message = unprocessedNode.querySelector("span");
-          if(message){
-            var obj = {type: "text", message: message.innerText, emojiFlag: regExpEmojis.test(message.innerHTML)
-            };
-            arrObjs.push(obj);
+          //procesamos imágenes de plantilla
+          var backImg = unprocessedNode.querySelector("div[style^='background-image:']");
+          if(backImg){
+            var simpleImage = backImg.querySelector("img");
+            if(!simpleImage){
+              var obj = {type: "image"};//,url: backImg.outerHTML.regex url };
+              arrObjs.push(obj);
+            }
           }
-          var buttons = unprocessedNode.querySelectorAll("a[href='#']");
+          //procesamos textos simples
+          var messagesBoxes = unprocessedNode.querySelectorAll("div[message][body]");
+          messagesBoxes.forEach((messageDiv)=>{
+            var message = messageDiv.querySelector("span");
+            if(message && (message.innerText || regExpEmojis.test(message.innerText))){ //igual hay mensajes que son únicamente un emoticono. (e.g un corazón)
+              var obj = {type: "text", message: message.innerText, emojiFlag: regExpEmojis.test(message.innerHTML)};
+              arrObjs.push(obj);
+            }   
+          });
+         //procesamos textos de plantilla
+          var messagesSheet = unprocessedNode.querySelectorAll("div[class='']");
+          messagesSheet.forEach((messageDiv)=>{
+            if(messageDiv.innerHTML!==""){
+              var obj = {type: "text", message: messageDiv.innerText, emojiFlag: regExpEmojis.test(messageDiv.innerHTML)};
+              arrObjs.push(obj);
+            } 
+          });
+          //procesamos botones (siempre en plantilla)
+          var buttons = unprocessedNode.querySelectorAll("a[href='#']"); //si href es distinto de # es un link a página externa. 
           if(buttons){
-            buttons.forEach((button)=>{ //no podemos devolver el nodo o el elemento clickable.
+            buttons.forEach((button)=>{ //no podemos devolver el nodo o el elemento clickable, devolvemos la ruta a él.
               var obj = {
                 type: "button",
-                message:  button.innerText,emojiFlag: regExpEmojis.test(button.innerText),
+                message:  button.innerText,
+                emojiFlag: regExpEmojis.test(button.innerText) || regExpEmojis.test(button.innerText) ,//" ⚡️↵"
                 path: getPath(button)
               };
               arrObjs.push(obj);
             });
-          }  
+          } 
+          //procesamos enlaces a páginas externas.
+          var buttonsLinks = unprocessedNode.querySelectorAll("a[href]:not([href='#'])"); //si href es distinto de # es un link a página externa. 
+          if(buttonsLinks){
+            buttonsLinks.forEach((button)=>{ //no podemos devolver el nodo o el elemento clickable, devolvemos la ruta a él.
+              var obj = {
+                type: "buttonLink",
+                message:  button.innerText,
+                emojiFlag: regExpEmojis.test(button.innerText) || regExpEmojis.test(button.innerText) ,//" ⚡️↵"
+                path: getPath(button)
+              };
+              arrObjs.push(obj);
+            });
+          } 
           return arrObjs;
         }
+
+
+        /**
+         * @param  {unprocessedNode} - DOM node, correspondent with the bottom buttons container.
+         * @return {Array[Object]} All data about the bottom buttons.
+        */
+        function getBottomButtons(unprocessedNode){
+          if(!unprocessedNode){return [];}
+          var arrObjs = [];
+          var bottomButtonsContainer =  unprocessedNode.querySelector("div[currentselectedindex]");
+          var bottomButtons = bottomButtonsContainer.querySelectorAll("div[role='button']");
+          if(bottomButtons){
+            bottomButtons.forEach((button)=>{ //no podemos devolver el nodo o el elemento clickable, devolvemos la ruta a él.
+              var obj = {
+                type: "button",
+                message:  button.innerText,
+                emojiFlag: regExpEmojis.test(button.innerText) || regExpEmojis.test(button.innerText) ,//" ⚡️↵",
+                path: getPath(button)
+              };
+              arrObjs.push(obj);
+            });
+          }
+          return arrObjs;
+        }
+
+
         /**
          * @param  {unprocessedNode} - DOM node, correspondent with a message/element received unprocessed.
          * @return {Array[String]} String query to select ElementHandle Button that can be clickable.
         */
-        
-        getPath =  function (node) { //TODO pulir..
-          /*
-          var path;
-          while (node) {
-            var name = node.localName;
-            if (!name) break;
-            name = name.toLowerCase();
-            var parent = node.parentNode;
-            var sameTagSiblings = parent.children;
-            if (sameTagSiblings.length > 1) { 
-              var count = 0, index;
-              for(var element in sameTagSiblings){
-                if(sameTagSiblings[element] === node){
-                  index = count;
-                }
-                count++;
-              }
-              if (index > 1) {
-                name += ':nth-child(' + index + ')';
-              }
-            }
-            path = name + (path ? '>' + path : '');
-            node = parent;
-          }
-          return path;*/
+        getPath =  function (node) { 
 
           var el = node;
           if (!(el instanceof Element)) return;
@@ -202,13 +248,11 @@ function listenBotResponse(page){
         /*con waitForNavigation NO:
         If at the moment of calling the method the selector already exists, the method will return immediately.
          If the selector doesn't appear after the timeout milliseconds of waiting, the function will throw.*/
-        return new Promise(function(resolve,reject){
+        var promiseMessages =  new Promise(function(resolve,reject){
           
           var box = document.querySelector("div[role='presentation']");
-          var buttons = box.querySelectorAll("a[href='#']");
           var closerBox = box.querySelector("div[role='region']");
           var messagesBox = closerBox.querySelector("div[id]");
-          //console.log(messagesBox); //JSHanlde node (elementHanlde extiende JSHandle)
           var elapsedTime;
           var insertedNodes = [];
           var processedNodes = [];
@@ -218,46 +262,74 @@ function listenBotResponse(page){
 
           var mutationObserver = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
-              //if(!firstMessage){ //no hace falta tratar el primer mensaje porque llega antes de que entremos en page.evaluate. (TODO. siempre así?)
-              //  if(mutation.addedNodes.length===1 && mutation.addedNodes[0].nodeName === "DIV"){firstMessage=true;} // >= 1 ó === 1 ?
-              //}else{
-                if(mutation.addedNodes.length===1 && mutation.addedNodes[0].nodeName === "DIV"){ 
-                  if(!elapsedTime){var elapsedTime = (new Date()-timestamp1)/1000;} //referencia temporal primer mensaje devuelto por el bot.
-                  insertedNodes = insertedNodes.concat(mutation.addedNodes[0]);
-                  var temporizer = setTimeout(()=>{
-                    if(settedTimeouts.length === 1){
-                      mutationObserver.disconnect();
-                      try{
-                        processedNodes = insertedNodes.map((node)=>{return processNodeData(node)});
-                      }catch(err){
-                        console.log(err);
-                      };
-                      resolve({time: elapsedTime,nodes: processedNodes});
-                    }else{
-                      settedTimeouts.pop();
-                    }
-                  },3000);
-                  settedTimeouts.push(true);
+
+              if(!elapsedTime){var elapsedTime = (new Date()-timestamp1)/1000;} //referencia temporal primer mensaje devuelto por el bot.
+              insertedNodes = insertedNodes.concat(mutation.addedNodes[0]);
+              var temporizer = setTimeout(()=>{
+                if(settedTimeouts.length === 1){
+                  mutationObserver.disconnect();
+                  try{
+                    insertedNodes = insertedNodes.filter((node)=>{if(node){return node;}}); //eliminamos undefined s.
+                    processedNodes = insertedNodes.map((node)=>{return processNodeData(node)});
+                    processedNodes = processedNodes.filter((node)=>{if(node.length){return node;}});
+                  }catch(err){
+                    console.log(err);
+                  };
+                  resolve({time: elapsedTime,nodes: processedNodes});
+                }else{
+                  settedTimeouts.pop();
                 }
-              //}
+              },3000);
+              settedTimeouts.push(true);
+            
             });
           });
           mutationObserver.observe(messagesBox, { childList: true });
           setTimeout(()=>{
-            console.log("reached 30secs.");
-            //if(settedTimeouts.length===0){
+            if(settedTimeouts.length===0){
+              console.log("reached 30secs.");
               try{
-                processedNodes = insertedNodes.map((node)=>{return processNode(node)});       
+                processedNodes = insertedNodes.map((node)=>{return processNodeData(node)});       
               }catch(err){
                 console.log(err);
               };
               mutationObserver.disconnect(); resolve({time: 30000,nodes: processedNodes});
-            //}
+            }
           },30000);
          
         });
-      });//,timestamp1);
 
+        var promiseBottomButtons = new Promise(function(resolve,reject){
+          
+          var box = document.querySelector("div[role='presentation']");
+          var closerBox = box.querySelector("div[class]"); //selecciona la primera capa que encuentra (la más exterior dentro de box).
+          var elapsedTime;
+          var insertedNodes = [];
+          var processedNodes = [];
+          var settedTimeouts = [];
+          var timestamp1 = new Date();
+          var bottomButtons = [];
+          var mutationObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                bottomButtons =getBottomButtons(mutation.addedNodes[0]);
+                if(bottomButtons.length){
+                  if(!elapsedTime){var elapsedTime = (new Date()-timestamp1)/1000;} //referencia temporal primer mensaje devuelto por el bot.
+                  mutationObserver.disconnect();
+                  resolve({time: elapsedTime,nodes: bottomButtons});
+                }
+            });
+          });
+          mutationObserver.observe(closerBox, { childList: true });
+          setTimeout(()=>{
+            console.log("reached 30secs ."); //TODO hay que ponerse en el caso en el que nos llega sólo bottomButtons?? y texto y bb.  
+            mutationObserver.disconnect(); resolve({time: 30000,nodes: []});
+          },30000);
+         
+        });
+
+        return Promise.all([promiseMessages,promiseBottomButtons]);
+      });//,timestamp1);
+      
       resolve(result);
       
     })();
