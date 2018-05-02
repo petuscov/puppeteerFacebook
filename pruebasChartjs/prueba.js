@@ -1,7 +1,7 @@
 "use strict";
 window.onload = ()=>{
-	//exampleChart();
-	//exampleChart2();
+	exampleChart();
+	exampleChart2();
 	myChart();
 };
 var datos = [{ //9

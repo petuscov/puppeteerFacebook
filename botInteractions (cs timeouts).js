@@ -94,7 +94,6 @@ function listenBotResponse(page){
         */
         function processNodeData(unprocessedNode){
           if(!unprocessedNode){return [];}
-          if(unprocessedNode.querySelector("div[data-tooltip-position='right']")){return  [];} //ignoramos primer mensaje.
           var arrObjs = [];
           /*si llega más de un mensaje en un nodo es porque el bot ha usado una plantilla para responder.*/ 
 
@@ -117,20 +116,11 @@ function listenBotResponse(page){
           //procesamos textos simples
           var messagesBoxes = unprocessedNode.querySelectorAll("div[body]"); //div[message][body]
           messagesBoxes.forEach((messageDiv)=>{
-            var messages = messageDiv.querySelectorAll("span:not([class])");
-            var messages2 = messageDiv.querySelectorAll("span[class]");
-            messages.forEach((message)=>{
-              if(message && (message.innerText || regExpEmojis.test(message.innerText))){ //igual hay mensajes que son únicamente un emoticono. (e.g un corazón)
-                var obj = {type: "text", message: message.innerText, emojiFlag: regExpEmojis.test(message.innerHTML)};
-                arrObjs.push(obj);
-              }   
-            });
-            messages2.forEach((message2)=>{
-              if(message2 && (message2.innerText || regExpEmojis.test(message2.innerText))){
-                var obj = {type: "text", message: message2.innerText, emojiFlag: regExpEmojis.test(message2.innerHTML)};
-                arrObjs.push(obj);
-              }
-            })
+            var message = messageDiv.querySelector("span:not([class])");
+            if(message && (message.innerText || regExpEmojis.test(message.innerText))){ //igual hay mensajes que son únicamente un emoticono. (e.g un corazón)
+              var obj = {type: "text", message: message.innerText, emojiFlag: regExpEmojis.test(message.innerHTML)};
+              arrObjs.push(obj);
+            }   
           });
          //procesamos textos de plantilla
           var messagesSheet = unprocessedNode.querySelectorAll("div[class='']");
@@ -237,17 +227,14 @@ function listenBotResponse(page){
           //var firstMessage = false; 
           var settedTimeouts = [];
           var timestamp1 = new Date();
-          var secondMessage = false;
+
           var mutationObserver = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
 
-              if(mutation.addedNodes.length){ //ignoramos primer mensaje.
-
-                if(!elapsedTime){var elapsedTime = (new Date()-timestamp1)/1000;} //referencia temporal primer mensaje devuelto por el bot.
-                insertedNodes = insertedNodes.concat(mutation.addedNodes[0]);
-                secondMessage = true;
-                var temporizer = setTimeout(()=>{
-                
+              if(!elapsedTime){var elapsedTime = (new Date()-timestamp1)/1000;} //referencia temporal primer mensaje devuelto por el bot.
+              insertedNodes = insertedNodes.concat(mutation.addedNodes[0]);
+              var temporizer = setTimeout(()=>{
+                if(settedTimeouts.length === 1){
                   mutationObserver.disconnect();
                   try{
                     insertedNodes = insertedNodes.filter((node)=>{if(node){return node;}}); //eliminamos undefined s.
@@ -257,18 +244,26 @@ function listenBotResponse(page){
                     console.log(err);
                   };
                   resolve({time: elapsedTime,nodes: processedNodes});
-                  
-                },7000);
-              }
+                }else{
+                  settedTimeouts.pop();
+                }
+              },3000);
+              settedTimeouts.push(true);
+            
             });
           });
           mutationObserver.observe(messagesBox, { childList: true });
           setTimeout(()=>{
-            if(!secondMessage){
+            if(settedTimeouts.length===0){
               console.log("reached 30secs.");
-              mutationObserver.disconnect(); resolve({time: 15000,nodes: processedNodes});
+              try{
+                processedNodes = insertedNodes.map((node)=>{return processNodeData(node)});       
+              }catch(err){
+                console.log(err);
+              };
+              mutationObserver.disconnect(); resolve({time: 30000,nodes: processedNodes});
             }
-          },15000);
+          },30000);
          
         });
 
@@ -300,9 +295,9 @@ function listenBotResponse(page){
           setTimeout(()=>{
             if(!bottomButtons.length){
               console.log("reached 30secs ."); //TODO hay que ponerse en el caso en el que nos llega sólo bottomButtons?? y texto y bb.  
-              mutationObserver.disconnect(); resolve({time: 15000,nodes: []});
+              mutationObserver.disconnect(); resolve({time: 30000,nodes: []});
             }
-          },15000);
+          },30000);
          
         });
 
