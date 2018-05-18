@@ -1,0 +1,50 @@
+{ 
+ 	"basicInfo":{
+ 		"name": "McDonalds",
+ 		"id": "092183740928374",
+ 		"likes": "23000000"
+ 	},
+ 	"messages":[{
+ 		"message": "Hola",
+ 		"time": 3.45
+ 	},{
+ 		"message": "Bye",
+ 		"time": 5.43
+ 	},{
+ 		"message": "Wow",
+ 		"time": 6.12
+ 	},{
+ 		"message": "Help",
+ 		"time": 2.72
+ 	},{
+ 		"message": "Yes",
+ 		"time": 3.52
+ 	},{
+ 		"message": "No",
+ 		"time": 5.12
+ 	},{
+ 		"message": "Amazing",
+ 		"time": 2.32
+ 	},{
+ 		"message": "I disagree",
+ 		"time": 4.12
+ 	},{
+ 		"message": "Attemp",
+ 		"time": 3.12
+ 	}],
+ 	"emojis":{
+ 		"numYes": 23,
+ 		"numNo": 45
+ 	},
+ 	"multimedia":{
+ 		"numYes": 13,
+ 		"numNo": 55
+	},
+	"reviewedFeatures":{
+		"variation":true,
+		"buttonEquivalent":false,
+		"helpCommand":true,
+		"initialButton":true,
+		"admitVariations":false
+	}
+}

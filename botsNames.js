@@ -24,7 +24,7 @@ var names = [
 	"wholefoods",
 	"redfoo",
 	"mtvnews"
-	//TODO get the other 75.
+	//,"McDonaldsPK"
 ];
 
 module.exports = {

@@ -1,33 +1,6 @@
 "use strict";
 const botInteractions = require("./botInteractions.js");
 const connection = require("./connectionMySQL.js");
-/**
- * Método para analizar todos los bots de chatbottle. 500 páginas, su ejecución puede tomar tiempo.
- * Realiza multiples updates en tabla bots mysql.
- * Usuario no tiene que estar logeado en facebook messenger.
- **
- * @param  {String} botPage - url to the chatbottle bot page.
- * @param  {Page} page - Puppeteer API Page instance.
- * @param  {Array[String]} list - array with all bots urls to process.
- * @param {Browser} browser - Puppeteer API Browser instance (needed for new pages creation).
- */
-function parseAllBots(page,browser,list){
-	return new Promise(function(resolve,reject){
-	    (async ()=>{
-	        var contadorBots = 1;
-	        // TODO loginWithUser(credentials.arrUsers[0].username,credentials.arrUsers[0].password,page);
-	        for(var i=1;i<containers.length;i++,contadorBots++){ 
-	        	if(contadorBots>=20){
-	        		//TODO we have to logout, and login with another different user
-	        		contadorBots =1;
-	        	}
-				await parseBotInfo(linkProcessed,browser);
-	        }
-	       
-	        resolve();
-	    })();
-  	});
-}
 
 /**
  * Método para obtener el número de likes de un bot en facebook, y para saber si es un canal de ventas de una compañia.
@@ -127,22 +100,6 @@ function parseBotInfo(botPageURL,browser){
 		})();
 	});
 };
-
-/**
- * Método para obtener los 100 bots más populares en función del número de likes.
- * Realiza una consulta en tabla bots de mysql.
- **
- * @returns {Array[String]} id - Id of the bot.
- */
-function getTop100(){
-	return new Promise(function(resolve,reject){
-	    (async ()=>{
-	        await page.goto(botPage);
-
-	        resolve();
-	    })();
-  	});
-}
 
 /**
  * Conversation must have been started previously.  

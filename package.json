@@ -6,6 +6,7 @@
   "dependencies": {
     "chromium": "^1.0.2",
     "express": "^4.16.3",
+    "facebook-chat-api": "^1.5.1",
     "mysql": "^2.15.0",
     "puppeteer": "^1.1.0",
     "socket.io": "^2.1.0"

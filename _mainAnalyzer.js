@@ -6,6 +6,43 @@ const botInteractions = require("./botInteractions.js");
 const botsNames = require("./botsNames.js");
 //const connection = require("./connectionMySQL.js");
 const parser = require("./parser.js");
+
+/**
+ * If executed as a terminal script, bot information will be printed to console. 
+ * (Example usage: node mainAnalyzer.js victoriassecret OR npm run analysis victoriassecret)
+ */
+if(process.argv.length>=3){
+  if(process.argv.length>3){
+    console.log("Detected two arguments or more.");
+    console.log("Just first argument will be used, it must be the bot id/name in facebook messenger.");
+  }
+  var results = analyzeBot(process.argv[2]); //doesnt save results in db.
+  printResults(results); //TODO https://github.com/nathanpeck/clui //???
+}
+
+/**
+ * Analyzer that makes use of both facebook-chat-api and puppeteer, to analyze both text capabilities and visual ones (buttons, images, etc).
+ **
+ * @param  {string} bot name or id in facebook messenger.
+ * @return {object} object with bot data.
+ */
+function analyzeBot(nameOrId){
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (async () => {
 
   const browser = await puppeteer.launch({
@@ -14,7 +51,9 @@ const parser = require("./parser.js");
     });
   const page = await browser.newPage(); 
   await loginWithUser(credentials.arrUsers[0].username,credentials.arrUsers[0].password,page);
-  //page.on('console', console.log);
+
+  page.on('console', console.log);
+  //
   var today = new Date(); 
   var timestampDay = ""; timestampDay=timestampDay+today.getFullYear();
   timestampDay=timestampDay+"-"+(today.getMonth()+1);
@@ -58,11 +97,13 @@ const parser = require("./parser.js");
   
 
 
-  //await checkBotInitialResponse("victoriassecret",page); //TODO en teoria fixeado, comprobar a fondo con vicsec y resto bots.
+  await checkBotInitialResponse("victoriassecret",page); //TODO en teoria fixeado, comprobar a fondo con vicsec y resto bots.
 
 
 
-  await checkBotInitialResponse("cnn",page); //TODO debug, bottom buttons no.
+  //await checkBotInitialResponse("cnn",page); //TODO debug, bottom buttons no.
+
+  //await checkBotInitialResponse("McDonaldsPK",page);
   //Ok, let's get started. Here are some options REPETIDO...
   //
   //Bottom buttons still a problem with vicsec y cnn... a veces ok, otras veces no en vicsec. ok con conversacion iniciada.
@@ -245,8 +286,13 @@ function checkBotInitialResponse(botName,page){
       var normalMsgs = response[0];
       var bottomButtons = response[1];
       for(var node in normalMsgs.nodes){
-        for(var key in normalMsgs.nodes[node]){
-          console.log(normalMsgs.nodes[node][key]);
+        for(var index in normalMsgs.nodes[node]){
+          var objectInformation = normalMsgs.nodes[node][index];
+          for(var key in objectInformation){
+            if(key!=="path"){
+              console.log(objectInformation[key]);
+            }
+          }
         }
       }
       for(var node in bottomButtons.nodes){
@@ -267,4 +313,109 @@ function checkBotInitialResponse(botName,page){
       resolve({messages: normalMsgs, bottomButtons: bottomButtons});
     })();
   });
+}
+
+
+
+
+
+
+
+
+
+
+{ 
+  "basicInfo":{
+    "name": "McDonalds",
+    "id": "092183740928374",
+    "likes": "23000000"
+  },
+  "messages":[{
+    "message": "Hola",
+    "time": 3.45
+  },{
+    "message": "Bye",
+    "time": 5.43
+  },{
+    "message": "Wow",
+    "time": 6.12
+  },{
+    "message": "Help",
+    "time": 2.72
+  },{
+    "message": "Yes",
+    "time": 3.52
+  },{
+    "message": "No",
+    "time": 5.12
+  },{
+    "message": "Amazing",
+    "time": 2.32
+  },{
+    "message": "I disagree",
+    "time": 4.12
+  },{
+    "message": "Attemp",
+    "time": 3.12
+  }],
+  "emojis":{
+    "numYes": 23,
+    "numNo": 45
+  },
+  "multimedia":{
+    "numYes": 13,
+    "numNo": 55
+  },
+  "reviewedFeatures":{
+    "variation":true,
+    "buttonEquivalent":false,
+    "helpCommand":true,
+    "initialButton":true,
+    "admitVariations":false,
+    "initialMsgUseful":true
+  }
+}
+
+/**
+ * Prints bot analysis information.
+ * @param  {object} results 
+ *    @param  {object} results.basicInfo 
+ *       @param  {string} results.basicInfo.name - bot name in facebook messenger
+ *       @param  {string} results.basicInfo.id - bot id in facebook messenger
+ *       @param  {number} results.basicInfo.likes - bot likes in facebook messenger
+ *    @param  {Array[object]} results.messages
+ *       @param  {string} results.messages[i].message - message sent to bot
+ *       @param  {number} results.messages[i].time - time bot took to respond message
+ *    @param  {object} results.emojis
+ *       @param  {number} results.emojis.numYes - number of bot responses that contained an emoji
+ *       @param  {number} results.emojis.numNo - number of bot responses that didnt contain an emoji
+ *    @param  {object} results.multimedia
+ *       @param  {number} results.multimedia.numYes - number of multimedia bot responses (image,audio,video) 
+ *       @param  {number} results.multimedia.numNo - number of bot responses that werent multimedia
+ *    @param  {object} results.reviewedFeatures
+ *       @param  {boolean} results.reviewedFeatures.variation - bot changes responses against same input.
+ *       @param  {boolean} results.reviewedFeatures.buttonEquivalent - bot accept both button press and button message.
+ *       @param  {boolean} results.reviewedFeatures.helpCommand - bot has a help command and is useful.
+ *       @param  {boolean} results.reviewedFeatures.initialButton - bot has an initial button (Get Started).
+ *       @param  {boolean} results.reviewedFeatures.admitVariations - bot recognises misspelled messages.
+ *       @param  {boolean} results.reviewedFeatures.initialMsgUseful - bot's initial message is useful.
+ */
+function printResults(results){
+  for(var key in results){
+    console.log(key + ":");
+    if(results[key].length>=0){//array.
+      var time = 0;
+      for(var i=0;i<results[key].length;i++){
+        time+=results[key][i].time;
+      }
+      var avgTime = time/results[key].length;
+      avgTime= avgTime.toFixed(2);
+      console.log("   average response time: "+avgTime+ " over "+ results[key].length+" messages.");
+    }else{
+      for(var data in results[key]){
+        console.log("   "+data + ":" + results[key][data]);
+
+      }
+    }
+  }
 }

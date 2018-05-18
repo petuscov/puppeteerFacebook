@@ -13,7 +13,7 @@ CREATE TABLE bots(
 );
 CREATE TABLE messagesenttobot(
 	id INT(11) NOT NULL AUTO_INCREMENT,
-	analysisdate NOT NULL VARCHAR(15),
+	analysisdate VARCHAR(15) NOT NULL,
 	botid VARCHAR(15),
 	messagesent VARCHAR(30),
 	buttonpressed TINYINT(1),
@@ -39,3 +39,40 @@ CREATE TABLE chatbottle(
 	link VARCHAR(600), #en la 2da pagina uno de 77... 116 en pagina 6..., 200 sigue siendo poco para alguno.. 400 TAMBIEN.
 	likes INT(15)
 );
+
+#TABLAS APLICACIÓN WEB
+
+CREATE TABLE users(
+	id INT(10) NOT NULL AUTO_INCREMENT,
+	username VARCHAR(15),
+	passwordhash VARCHAR(60),
+	UNIQUE (username),
+	PRIMARY KEY(id)
+);
+
+CREATE TABLE bot_analysis(
+	id INT(10) NOT NULL AUTO_INCREMENT,
+	botname VARCHAR(15),
+	botid VARCHAR(15),
+	analysisdate DATE,
+	nummessages INT(4),
+	nummessagesemojis INT(4),
+	nummessagesmultimedia INT(4),
+	supportsvariation TINYINT(1),
+	supportsbuttonequivalence TINYINT(1),
+	supportshelpcommand TINYINT(1),
+	hasinitialbutton TINYINT(1),
+	admitsvariations TINYINT(1),
+	UNIQUE (botname,botid),
+	PRIMARY KEY(id)
+);
+
+#Relacionamos a los usuarios con los bots que han analizado.
+CREATE TABLE user_analysis(
+	userid INT(10) NOT NULL,
+	botid INT(10) NOT NULL,
+	FOREIGN KEY(userid) REFERENCES users(id),
+	FOREIGN KEY(botid) REFERENCES bot_analysis(id)
+);
+
+

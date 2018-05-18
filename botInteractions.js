@@ -5,6 +5,9 @@
  * @return {String} - Bot id.
  **
  * Starts conversation if it has not been started.
+ * If conversation has been started or if chatbot doesnt have startConversation button (Get Started) then 
+ * it must be handled the reject, taking a screenshot (to ensure bot doesnt have get started button) and 
+ * sending a message (e.g hello) to init conversation.
  */
 function startBotConversation(botName,page){
   return new Promise(function(resolve,reject){
@@ -16,7 +19,7 @@ function startBotConversation(botName,page){
       var botonStart = await page.$("a[href='#']:not([tabindex]):not([aria-label]):not([id]):not([role='button'])");
       if(botonStart){ //boton de iniciar conversacion, cuando está ya iniciada no aparece.
         await botonStart.click(); 
-      }else{
+      }else{ 
         reject();
       }
       resolve();
@@ -177,7 +180,7 @@ function listenBotResponse(page){
         function getBottomButtons(unprocessedNode){
           if(!unprocessedNode){return [];}
           var arrObjs = [];
-          var bottomButtonsContainer =  unprocessedNode.querySelector("div[currentselectedindex]");
+          var bottomButtonsContainer = unprocessedNode.querySelector("div[currentselectedindex]");
           var bottomButtons = bottomButtonsContainer.querySelectorAll("div[role='button']");
           if(bottomButtons){
             bottomButtons.forEach((button)=>{ //no podemos devolver el nodo o el elemento clickable, devolvemos la ruta a él.
@@ -276,14 +279,15 @@ function listenBotResponse(page){
           try{
             var box = document.querySelector("div[role='presentation']");
             var closerBox = box.querySelector("div[class]"); //selecciona la primera capa que encuentra (la más exterior dentro de box).
+            console.log(closerBox._args);//TODO ver hmtl seleccionado...
           }catch(e){
             reject(e);
             return;
           }
           var elapsedTime;
-          var insertedNodes = [];
-          var processedNodes = [];
-          var settedTimeouts = [];
+          //var insertedNodes = [];
+          //var processedNodes = [];
+          //var settedTimeouts = [];
           var timestamp1 = new Date();
           var bottomButtons = [];
           var mutationObserver = new MutationObserver(function(mutations) {
@@ -299,7 +303,7 @@ function listenBotResponse(page){
           mutationObserver.observe(closerBox, { childList: true });
           setTimeout(()=>{
             if(!bottomButtons.length){
-              console.log("reached 30secs ."); //TODO hay que ponerse en el caso en el que nos llega sólo bottomButtons?? y texto y bb.  
+              console.log("reached 15secs ."); //TODO hay que ponerse en el caso en el que nos llega sólo bottomButtons?? y texto y bb.  
               mutationObserver.disconnect(); resolve({time: 15000,nodes: []});
             }
           },15000);
