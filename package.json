@@ -13,6 +13,7 @@
   },
   "devDependencies": {},
   "scripts": {
+    "analize":"node _mainAnalyzer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

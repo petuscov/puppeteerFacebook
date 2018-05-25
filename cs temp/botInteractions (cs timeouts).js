@@ -5,9 +5,6 @@
  * @return {String} - Bot id.
  **
  * Starts conversation if it has not been started.
- * If conversation has been started or if chatbot doesnt have startConversation button (Get Started) then 
- * it must be handled the reject, taking a screenshot (to ensure bot doesnt have get started button) and 
- * sending a message (e.g hello) to init conversation.
  */
 function startBotConversation(botName,page){
   return new Promise(function(resolve,reject){
@@ -19,7 +16,7 @@ function startBotConversation(botName,page){
       var botonStart = await page.$("a[href='#']:not([tabindex]):not([aria-label]):not([id]):not([role='button'])");
       if(botonStart){ //boton de iniciar conversacion, cuando está ya iniciada no aparece.
         await botonStart.click(); 
-      }else{ 
+      }else{
         reject();
       }
       resolve();
@@ -97,7 +94,6 @@ function listenBotResponse(page){
         */
         function processNodeData(unprocessedNode){
           if(!unprocessedNode){return [];}
-          if(unprocessedNode.querySelector("div[data-tooltip-position='right']")){return  [];} //ignoramos primer mensaje.
           var arrObjs = [];
           /*si llega más de un mensaje en un nodo es porque el bot ha usado una plantilla para responder.*/ 
 
@@ -120,20 +116,11 @@ function listenBotResponse(page){
           //procesamos textos simples
           var messagesBoxes = unprocessedNode.querySelectorAll("div[body]"); //div[message][body]
           messagesBoxes.forEach((messageDiv)=>{
-            var messages = messageDiv.querySelectorAll("span:not([class])");
-            var messages2 = messageDiv.querySelectorAll("span[class]");
-            messages.forEach((message)=>{
-              if(message && (message.innerText || regExpEmojis.test(message.innerText))){ //igual hay mensajes que son únicamente un emoticono. (e.g un corazón)
-                var obj = {type: "text", message: message.innerText, emojiFlag: regExpEmojis.test(message.innerHTML)};
-                arrObjs.push(obj);
-              }   
-            });
-            messages2.forEach((message2)=>{
-              if(message2 && (message2.innerText || regExpEmojis.test(message2.innerText))){
-                var obj = {type: "text", message: message2.innerText, emojiFlag: regExpEmojis.test(message2.innerHTML)};
-                arrObjs.push(obj);
-              }
-            })
+            var message = messageDiv.querySelector("span:not([class])");
+            if(message && (message.innerText || regExpEmojis.test(message.innerText))){ //igual hay mensajes que son únicamente un emoticono. (e.g un corazón)
+              var obj = {type: "text", message: message.innerText, emojiFlag: regExpEmojis.test(message.innerHTML)};
+              arrObjs.push(obj);
+            }   
           });
          //procesamos textos de plantilla
           var messagesSheet = unprocessedNode.querySelectorAll("div[class='']");
@@ -180,7 +167,7 @@ function listenBotResponse(page){
         function getBottomButtons(unprocessedNode){
           if(!unprocessedNode){return [];}
           var arrObjs = [];
-          var bottomButtonsContainer = unprocessedNode.querySelector("div[currentselectedindex]");
+          var bottomButtonsContainer =  unprocessedNode.querySelector("div[currentselectedindex]");
           var bottomButtons = bottomButtonsContainer.querySelectorAll("div[role='button']");
           if(bottomButtons){
             bottomButtons.forEach((button)=>{ //no podemos devolver el nodo o el elemento clickable, devolvemos la ruta a él.
@@ -240,17 +227,14 @@ function listenBotResponse(page){
           //var firstMessage = false; 
           var settedTimeouts = [];
           var timestamp1 = new Date();
-          var secondMessage = false;
+
           var mutationObserver = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
 
-              if(mutation.addedNodes.length){ //ignoramos primer mensaje.
-
-                if(!elapsedTime){var elapsedTime = (new Date()-timestamp1)/1000;} //referencia temporal primer mensaje devuelto por el bot.
-                insertedNodes = insertedNodes.concat(mutation.addedNodes[0]);
-                secondMessage = true;
-                var temporizer = setTimeout(()=>{
-                
+              if(!elapsedTime){var elapsedTime = (new Date()-timestamp1)/1000;} //referencia temporal primer mensaje devuelto por el bot.
+              insertedNodes = insertedNodes.concat(mutation.addedNodes[0]);
+              var temporizer = setTimeout(()=>{
+                if(settedTimeouts.length === 1){
                   mutationObserver.disconnect();
                   try{
                     insertedNodes = insertedNodes.filter((node)=>{if(node){return node;}}); //eliminamos undefined s.
@@ -260,18 +244,26 @@ function listenBotResponse(page){
                     console.log(err);
                   };
                   resolve({time: elapsedTime,nodes: processedNodes});
-                  
-                },7000);
-              }
+                }else{
+                  settedTimeouts.pop();
+                }
+              },3000);
+              settedTimeouts.push(true);
+            
             });
           });
           mutationObserver.observe(messagesBox, { childList: true });
           setTimeout(()=>{
-            if(!secondMessage){
+            if(settedTimeouts.length===0){
               console.log("reached 30secs.");
-              mutationObserver.disconnect(); resolve({time: 15000,nodes: processedNodes});
+              try{
+                processedNodes = insertedNodes.map((node)=>{return processNodeData(node)});       
+              }catch(err){
+                console.log(err);
+              };
+              mutationObserver.disconnect(); resolve({time: 30000,nodes: processedNodes});
             }
-          },15000);
+          },30000);
          
         });
 
@@ -279,15 +271,14 @@ function listenBotResponse(page){
           try{
             var box = document.querySelector("div[role='presentation']");
             var closerBox = box.querySelector("div[class]"); //selecciona la primera capa que encuentra (la más exterior dentro de box).
-            console.log(closerBox._args);//TODO ver hmtl seleccionado...
           }catch(e){
             reject(e);
             return;
           }
           var elapsedTime;
-          //var insertedNodes = [];
-          //var processedNodes = [];
-          //var settedTimeouts = [];
+          var insertedNodes = [];
+          var processedNodes = [];
+          var settedTimeouts = [];
           var timestamp1 = new Date();
           var bottomButtons = [];
           var mutationObserver = new MutationObserver(function(mutations) {
@@ -303,10 +294,10 @@ function listenBotResponse(page){
           mutationObserver.observe(closerBox, { childList: true });
           setTimeout(()=>{
             if(!bottomButtons.length){
-              console.log("reached 15secs ."); //TODO hay que ponerse en el caso en el que nos llega sólo bottomButtons?? y texto y bb.  
-              mutationObserver.disconnect(); resolve({time: 15000,nodes: []});
+              console.log("reached 30secs ."); //TODO hay que ponerse en el caso en el que nos llega sólo bottomButtons?? y texto y bb.  
+              mutationObserver.disconnect(); resolve({time: 30000,nodes: []});
             }
-          },15000);
+          },30000);
          
         });
 
@@ -318,8 +309,7 @@ function listenBotResponse(page){
     }catch(err){
       reject(err);
     }
-    
-    resolve(result);
+      resolve(result);
       
     })();
   });
