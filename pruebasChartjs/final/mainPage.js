@@ -20,13 +20,30 @@ window.onload = ()=>{
 	    	$('#loginModal').hide();
 	    	$('.errorMsg').text("");
 	    }
-	})
+	});
 	$('#signUpModal').click(function(event){
 		if (event.target.id == 'signUpModal') {
 	        $('#signUpModal').hide();
 	    	$('.errorMsg').text("");
 	    }
-	})
+	});
+
+	$('#logInForm').submit(function(event) {
+        event.preventDefault();
+        $.post('/action_login', function(data) {
+        	if(data.errMsg){
+        		$('.errorMsg').text(data.errMsg);
+        	}
+  		});
+	});
+	$('#signUpForm').submit(function(event) {
+        event.preventDefault();
+        $.post('/action_signup', function(data) {
+    		if(data.errMsg){
+    			$('.errorMsg').text(data.errMsg);
+  			}
+  		});
+	});
 };
 
 function validateLoginData(){

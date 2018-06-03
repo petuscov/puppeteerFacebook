@@ -5,7 +5,7 @@ var fileSystem = require('fs');
 var path = require('path');
 var bodyParser = require('body-parser');
 var bcrypt = require('bcrypt-nodejs');
-var passport = require('passport');
+//var passport = require('passport');
 var session = require('express-session');
 var cookieParser = require('cookie-parser');
 const saltRounds = 10;
@@ -30,8 +30,8 @@ app.use(session({
     resave: true,
     saveUninitialized: true 
 }));
-app.use(passport.initialize());
-app.use(passport.session());
+//app.use(passport.initialize());
+//app.use(passport.session());
 
 app.use(bodyParser.json()); 
 app.use(bodyParser.urlencoded({
@@ -102,7 +102,7 @@ app.post('/action_login',function(req,res){
     //comprobamos si existe el usuario y el hash de la contraseña coincide con el de el usuario.
     loginUser(req.body.username,req.body.password).then(function(correct){
         if(correct){
-            passport.authenticate('local', { failureFlash: 'Invalid username or password.'});
+            //passport.authenticate('local', { failureFlash: 'Invalid username or password.'});
 
             res.redirect('/logedPage.html');    
             //, session:true });
@@ -123,6 +123,7 @@ app.post('/action_signup',function(req,res){
         if(correct){
             console.log("username registered.");
         }else{
+            res.send({errMsg: "username already exists."});
             console.log("username already exists.");
         }
     }).catch(function(err){
@@ -229,3 +230,14 @@ function loginUser(username, password){
         });
     });
 }
+
+//TODO al realizar análisis
+
+/* hacer fuera, en app web si que es necesario para guardar en sql.
+    var today = new Date(); 
+    var timestampDay = ""; timestampDay=timestampDay+today.getFullYear();
+    timestampDay=timestampDay+"-"+(today.getMonth()+1);
+    timestampDay=timestampDay+"-"+today.getDate();
+    console.log(timestampDay);
+    */
+    //console.log(data);

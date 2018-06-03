@@ -5,15 +5,17 @@
   "main": "indexFacebook.js",
   "dependencies": {
     "chromium": "^1.0.2",
+    "clui": "^0.3.6",
     "express": "^4.16.3",
     "facebook-chat-api": "^1.5.1",
+    "melanke-watchjs": "^1.4.3",
     "mysql": "^2.15.0",
     "puppeteer": "^1.1.0",
     "socket.io": "^2.1.0"
   },
   "devDependencies": {},
   "scripts": {
-    "analize":"node _mainAnalyzer.js",
+    "analize": "node _mainAnalyzer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

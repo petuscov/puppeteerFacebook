@@ -2,26 +2,47 @@
 
 const puppeteer = require("puppeteer");
 const credentials = require("./credentials.js");
-const botInteractions = require("./botInteractions.js");
+//const botInteractions = require("./botInteractions.js");
 const botsNames = require("./botsNames.js");
 //const connection = require("./connectionMySQL.js");
-const parser = require("./parser.js");
-const analyzer = require("./analyzer.js");
+//const parser = require("./parser.js");
+
+const events = require('events');
+const eventsReceiver = new events.EventEmitter();
+const analyzer = require("./_analyzer.js")(eventsReceiver);
+var CLI = require('clui'),
+  Spinner = CLI.Spinner,
+  Line = CLI.Line;
 
 /**
  * File designed to be executed as a terminal script, bot information will be printed to console. 
  * (Example usage: node mainAnalyzer.js victoriassecret OR npm run analysis victoriassecret)
  *
- * TODO PONER MÁS BONITO: COLORES, BARRAS, CHECKS VERDES, AYUDA CON LOS PARÁMETROS NECESARIOS ANTE MAL USO 
- *O COMANDO -HELP -H  https://github.com/nathanpeck/clui 
  */
 if(process.argv.length>=3){
   if(process.argv.length>3){
     console.log("Detected two arguments or more.");
-    console.log("Just first argument will be used, it must be the bot id/name in facebook messenger.");
+    console.log("Just first argument will be used, it must be the bot id/name in facebook messenger."); //TODO incluir enlace a pagina wiki con captura con messenger bot name
   }
-  var results = analyzer.analyzeBot(process.argv[2]); //doesnt save results in db.
-  printResults(results); 
+
+  var progress = new Spinner('Analysis in progress...  ', ['⣾','⣽','⣻','⢿','⡿','⣟','⣯','⣷']);
+  progress.start();
+  eventsReceiver.on('update',(data)=>{
+    
+
+    if(typeof(data)==='number'){data = "msg time";}
+    progress.message('Analysis in progress... Info about ' + data +' processed.           ');
+  });
+
+  (async function(){
+    var results = await analyzer.analyzeBot(process.argv[2],false); //doesnt save results in db.
+    progress.stop();
+    printResults(results);
+    return;
+  })();
+  return;
+}else{
+  console.log("Specify name or id of bot to analyze."); //TODO incluir enlace a pagina wiki con captura con messenger bot name
 }
 
 /**
@@ -49,6 +70,7 @@ if(process.argv.length>=3){
  *       @param  {boolean} results.reviewedFeatures.initialMsgUseful - bot's initial message is useful.
  */
 function printResults(results){
+  console.log("\n\n");
   for(var key in results){
     console.log(key + ":");
     if(results[key].length>=0){//array.

@@ -29,7 +29,8 @@
 	<div id="loginModal" class='modal'>
 		<div class='modal-content'>
 			<p>Log in</p>
-			<form action="action_login" method="post" onsubmit="return validateLoginData()" >
+<!--<form action="action_login" id="logInForm" method="post" onsubmit="return validateLoginData()" >-->
+			<form id="logInForm" method="post" onsubmit="return validateLoginData()" >
 				Username:<br>
 				<input type="text" id='username' name="username" required><br>
 				Password:<br>
@@ -43,7 +44,8 @@
 	<div id="signUpModal" class='modal'>
 		<div class='modal-content'>
 			<p>Sign up</p>
-			<form action="action_signup" onsubmit="return validateSignUpData()" method="post">
+			<!--<form action="action_signup" id="signUpForm" onsubmit="return validateSignUpData()" method="post"> -->
+			<form id="signUpForm" onsubmit="return validateSignUpData()" method="post">
 				Username:<br>
 				<input type="text" id='newUsername' name="username"  required><br>
 				Password:<br>
