@@ -309,6 +309,27 @@ function listenBotResponse(page){
             });
           } 
 
+          //procesamos videos.
+          var videos = unprocessedNode.querySelectorAll("video"); 
+          if(videos){
+            videos.forEach(()=>{ 
+              var obj = {
+                type: "video"
+              };
+              arrObjs.push(obj);
+            });
+          } 
+          //procesamos audios.
+          var audios = unprocessedNode.querySelectorAll("audio"); 
+          if(audios){
+            audios.forEach(()=>{ 
+              var obj = {
+                type: "audio"
+              };
+              arrObjs.push(obj);
+            });
+          } 
+
           //console.log(unprocessedNode);
           
           return arrObjs;
@@ -364,18 +385,22 @@ function listenBotResponse(page){
         var closerBox = box.querySelector("div[role='region']");
         var messagesBox = closerBox.querySelector("div[id]");
         var timestamp = new Date();
-     
+        var processed = [];
+        var elapsedTime;
+        var last = new Date();
         var promiseMessages = function(){
           return new Promise(function(resolve,reject){
 
             function callback(mutations){
+              console.log("mutation :D"); //CNN POR QUÉ SÓLO HAY 1?? WTF.
               mutations.forEach(function(mutation) {
                 var nodeRaw = mutation.addedNodes;
                 if(nodeRaw.length){
-                  if(!elapsedTime){var elapsedTime = (new Date()-timestamp)/1000;} 
+                  if(!elapsedTime){elapsedTime = (new Date()-timestamp)/1000;} 
                   //Obtener selector del nodo, para volver a realizar querySelector y obtener el html añadido en el ::after.
                   var selector = getPath(nodeRaw[0]);
-
+                  last = new Date();
+                  //console.log(nodeRaw.length);
                   setTimeout(()=>{ 
                     var addedNode = document.querySelector(selector);
                     try{
@@ -383,8 +408,9 @@ function listenBotResponse(page){
                     } catch (e) {
                       console.log(e);
                     }
-                    mutationObserver.disconnect();
-                    resolve({time: elapsedTime,nodes: obj});
+                    processed.push(obj);
+                    //mutationObserver.disconnect();
+                    //resolve({time: elapsedTime,nodes: obj});
                   },500)
                 }
               });
@@ -392,7 +418,20 @@ function listenBotResponse(page){
             
             var mutationObserver = new MutationObserver(callback);
             mutationObserver.observe(messagesBox, { childList: true});
-            setTimeout(()=>{resolve({time: 7000,nodes: []});},7000);
+
+            //TODOTODOTODOTODOTODOTODOTODO CNN ALGUNA FORMA!!
+            var endCallback = ()=>{ //TODO esperar más tiempo si se ha recibido un mensaje. recepción msg => esperar 3 secs desde él.
+              var lastMsgInterval = new Date()-last;
+              console.log(lastMsgInterval);
+              if(lastMsgInterval<10000){ // si han pasado menos de 3 segundos
+                setTimeout(endCallback,10000);
+              }else{
+                mutationObserver.disconnect();
+                resolve({time: elapsedTime || 7000,nodes: processed});  
+              } 
+              
+            }
+            setTimeout(endCallback,7000);
           });
         }
 

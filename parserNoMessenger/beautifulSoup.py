@@ -95,5 +95,5 @@ db.close()
 #
 #mysqldump -u root -p -h localhost messengerbots chatbottle > chatbottleBackUp.sql 
 #
-#para ver los 200 mejores bots por likes: select * from chatbottle order by likes desc limit 200
+#para ver los 200 mejores bots por likes: select * from chatbottle order by likes desc limit 200;
 

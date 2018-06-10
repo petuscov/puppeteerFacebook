@@ -94,6 +94,7 @@ module.exports = function(eventEmitter){
         await helperPuppeteer.writeMessage(page, "Hello"); 
       } catch (err) {
         //Si el nombre o el id era erróneo se ha redireccionado a www.messenger.com y no hay input para texto mensajes.
+        browser.close(); 
         console.log("\nbad id or name provided.");
         return 1;
       }
@@ -102,7 +103,8 @@ module.exports = function(eventEmitter){
     
     var response = await helperPuppeteer.listenBotResponse(page);
     if(response[0].time === 7000 && response[1].time === 7000){
-      console.log("\nbot doesnt respond.");
+      browser.close(); 
+      console.log("\nBot doesnt respond.");
       return 1;
     }
     

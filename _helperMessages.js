@@ -9,13 +9,13 @@ function getText(botResponse){
   var text = "";
   var arrNodes =  botResponse[0].nodes;
   for(var i =0; i < arrNodes.length; i++){
-    //for(var index in arrNodes[i]){
-      var node = arrNodes[i];//[index];
+    for(var index in arrNodes[i]){
+      var node = arrNodes[i][index];
       if(node.type === 'text'){
         text+=node.message;
         text+='\n'; 
       }
-    //}
+    }
   }
   return text;
 }
@@ -29,12 +29,12 @@ function getButtons(botResponse){
   var buttons = [];
   var arrNodes =  botResponse[0].nodes;
   for(var i =0; i < arrNodes.length; i++){
-    //for(var index in arrNodes[i]){
-      var node = arrNodes[i];//[index];
+    for(var index in arrNodes[i]){
+      var node = arrNodes[i][index];
       if(node.type === 'button'){
         buttons.push(node);
       }
-    //}
+    }
   }
   var arrNodesButtons = botResponse[1].nodes; 
     for(var i =0; i < arrNodesButtons.length; i++){
@@ -56,12 +56,12 @@ function containsEmojis(botResponse){
   var containsEmojis = false;
   var arrNodes =  botResponse[0].nodes;
   for(var i =0; i < arrNodes.length; i++){
-    //for(var index in arrNodes[i]){
-      var node = arrNodes[i];//[index];
+    for(var index in arrNodes[i]){
+      var node = arrNodes[i][index];
       if(node.emojiFlag){
         containsEmojis = true; 
       }
-    //}
+    }
   }
   for(var node in botResponse[1].nodes){
     if(node.emojiFlag){
@@ -81,12 +81,12 @@ function containsMultimedia(botResponse){
   var multimedia = false;
   var arrNodes =  botResponse[0].nodes;
   for(var i =0; i < arrNodes.length; i++){
-    //for(var index in arrNodes[i]){
-      var node = arrNodes[i];//[index];
-      if(node.type === 'image' || node.type === 'sheetImage'){ //TODO add video, audio
+    for(var index in arrNodes[i]){
+      var node = arrNodes[i][index];
+      if(node.type === 'image' || node.type === 'sheetImage' || node.type === 'video' || node.type === 'audio'){
         multimedia = true; 
       }
-    //}
+    }
   }
   return multimedia;
 }
