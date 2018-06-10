@@ -399,7 +399,7 @@ module.exports = function(eventEmitter){
         }
         var response = await helperPuppeteer.listenBotResponse(page); 
         buttons = helperMessages.getButtons(response); 
-        if(buttons){
+        if(buttons.length){
           found = true;
         }
       }
@@ -430,7 +430,7 @@ module.exports = function(eventEmitter){
         } 
         var response = await helperPuppeteer.listenBotResponse(page); 
         buttons = helperMessages.getButtons(response); 
-        if(buttons){
+        if(buttons.length){
           found = true;
         }
       }
