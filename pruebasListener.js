@@ -27,38 +27,55 @@ const credentials = require("./credentials.js");
 
   await helperPuppeteer.loginWithUser(credentials.arrUsers[0].username,credentials.arrUsers[0].password,page);
   await helperPuppeteer.closeAllBotConversations(page); 
-  var nameOrId = 'cnn';
+  
+  var nameOrId = 'cnn'; //cnn
   
   //MSGS. OK.
 
   try{
     await helperPuppeteer.startBotConversation(nameOrId,page);
   } catch (err) {
-    await helperPuppeteer.writeMessage(page, "help");//"Get started"); // "help"); //"Get started");
+    await helperPuppeteer.writeMessage(page, "Get started"); // "help"); //"Get started");
   }
   var response;
   response = await helperPuppeteer.listenBotResponse(page); 
-  console.log(response);
   
+  printData(response);
+
+  return;
+  //console.log(response[0].nodes);
+  var multi = helperMessages.containsMultimedia(response);
+  console.log(multi);
+  var emojis = helperMessages.containsEmojis(response);
+  console.log(emojis);
+  var buttons = helperMessages.getButtons(response);
+  console.log(buttons);
+  var text = helperMessages.getText(response);
+  console.log(text);
+  
+  
+
+  console.log("end");
   return;
 
   //var text = await helperMessages.getText(response); 
   //console.log(text);
-  var buttons = await helperMessages.getButtons(response); 
-  console.log(buttons);
-
-  return;
+  
+  //return;
   //NO SE PROCESA EL MSG PORQUE EL CONTENIDO ESTÁ EN UN ::AFTER. PARA OBTENERLO HAY QUE VOLVER A ESCRIBIR 'Get started',
   //LA SEGUNDA VEZ SI QUE SE OBTIENE EL CONTENIDO PROCESADO EN UN OBJETO. ESTO HA LLEVADO TIEMPO.
   //PARA OBTENERLO A LA PRIMERA: OBTENER SELECTOR DEL NODO AÑADIDO, Y VOLVER A REALIZAR QUERYSELECTOR PARA OBTENER EL NODO ENTERO (CON CONTENIDO ::AFTER)
-  await helperPuppeteer.writeMessage(page, "Get started");
-  response = await helperPuppeteer.listenBotResponse(page);
-  console.log(response);   
-  
   await helperPuppeteer.writeMessage(page, "Help");
   response = await helperPuppeteer.listenBotResponse(page);
-  console.log(response);  
+  //console.log(response);   
   
+  printData(response);
+
+  await helperPuppeteer.writeMessage(page, "Hello");
+  response = await helperPuppeteer.listenBotResponse(page);
+  //console.log(response);  
+  printData(response);
+
   console.log("fin");
   return;
 
@@ -166,6 +183,17 @@ var stackToButtons;
 
 })();
 
+function printData(response){
+  console.log("TIME: ",response[0].time);
+  for(var index in response[0].nodes){
+    var node = response[0].nodes[index];
+    console.log(node);
+  }
+  for(var index in response[1].nodes){
+    var node = response[1].nodes[index];
+    console.log(node);
+  }
+}
 
 //se ha conseguido corregir botlistener. si es necesario testear más comenzar analizando el listener
 // existente en helperPuppeteer.
