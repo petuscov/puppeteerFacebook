@@ -57,7 +57,8 @@ module.exports = function(eventEmitter){
     if(app){ //TODO 4 app.
       var socket = io(app.url);
       watch(data,(changes)=>{
-         socket.emit("update",changes);
+        //socket.emit("update",changes);
+        socket.emit("update",data);
       });
       
     }else{
@@ -70,9 +71,8 @@ module.exports = function(eventEmitter){
     var stackInputs = [];
     var stackToButtons;
 
-
     const browser = await puppeteer.launch({
-        executablePath:"./node_modules/chromium/lib/chromium/chrome-linux/chrome",// parámetros necesarios en linux.
+        executablePath:"./../../node_modules/chromium/lib/chromium/chrome-linux/chrome",// parámetros necesarios en linux.
         headless: true
       });
     const page = await browser.newPage(); 
@@ -89,7 +89,7 @@ module.exports = function(eventEmitter){
       await helperPuppeteer.startBotConversation(nameOrId,page);
       data.reviewedFeatures.initialButton = true;
     } catch(err) {
-      await page.screenshot({path: "./startConv/"+nameOrId+"-notInitialButton.png"}); //temporal.
+      //await page.screenshot({path: "./startConv/"+nameOrId+"-notInitialButton.png"}); //temporal.
       data.reviewedFeatures.initialButton = false;
       try{
         await helperPuppeteer.writeMessage(page, "Hello"); 
