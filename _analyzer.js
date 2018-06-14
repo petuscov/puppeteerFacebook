@@ -6,7 +6,8 @@ const helperPuppeteer = require("./_helperPuppeteer.js");
 //const loginAPI = require("facebook-chat-api");
 //const helperFacebookChat = require("./_helperFacebookChatAPI.js");
 
-const credentials = require("./credentials.js");
+const credentials = require("./package.json").credentials;
+
 const helperMessages = require("./_helperMessages.js");
 const io = require("socket.io-client");
 const events = require('events');
@@ -81,7 +82,7 @@ module.exports = function(eventEmitter){
     page.on('console', (msg)=>{if(msg._text){console.log(msg._text);}else{console.log(msg);}});
 
 
-    await helperPuppeteer.loginWithUser(credentials.arrUsers[0].username,credentials.arrUsers[0].password,page);
+    await helperPuppeteer.loginWithUser(credentials.username,credentials.password,page);
     // 1. Cerramos todas las convesaciones existentes que tenga el usuario introducido. (Nos aseguramos de que no tenga ninguna activa)
     await helperPuppeteer.closeAllBotConversations(page); 
     // 2. Pulsamos botón getStarted.

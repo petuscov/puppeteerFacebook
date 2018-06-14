@@ -19,6 +19,10 @@
     "visual_analysis": "node pruebasChartjs/intento/webInterface.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "credentials" : {
+    "username" :"josubenaventegarcia@spainmail.com",
+    "password":"prueba1Prueba@"
+  },
   "author": "",
   "license": "ISC"
 }

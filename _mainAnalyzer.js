@@ -1,7 +1,7 @@
 "use strict";
 
 const puppeteer = require("puppeteer");
-const credentials = require("./credentials.js");
+//const credentials = require("./credentials.js");
 //const botInteractions = require("./botInteractions.js");
 //const botsNames = require("./botsNames.js");
 //const connection = require("./connectionMySQL.js");
