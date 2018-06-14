@@ -56,8 +56,8 @@ module.exports = function(eventEmitter){
     };
     if(app){ //TODO 4 app.
       var socket = io(app.url);
-      watch(data,(changes)=>{
-         socket.emit("update",changes);
+      watch(data,()=>{
+         socket.emit("update",data);
       });
       
     }else{
@@ -388,7 +388,6 @@ module.exports = function(eventEmitter){
       var copyOfStack = stackToButtons.slice();
       var found = false;
       for(;copyOfStack.length && !found;){
-        console.log("IMPORTANT:",copyOfStack.length);
         var message = copyOfStack.shift();
         if(message==="%initialMessage%"){
           // Cerramos conversación, para volverla a iniciarla escuchando la respuesta.
@@ -420,14 +419,13 @@ module.exports = function(eventEmitter){
       var copyOfStack = stackToButtons.slice();
       var found = false;
       for(;copyOfStack.length && !found;){
-        console.log("IMPORTANTe:",copyOfStack.length);
         var message = copyOfStack.shift();
         if(message==="%initialMessage%"){
           // Cerramos conversación, para volverla a iniciarla escuchando la respuesta.
-          console.log("close attemp.");
+          //console.log("close attemp.");
           await page.screenshot({path: "./GUETTA-IMPORTANT.png"});
           await helperPuppeteer.closeCurrentBotConversation(page); 
-          console.log("yay");
+          //console.log("yay");
           try{
             await helperPuppeteer.startBotConversation(nameOrId,page);
           } catch (err) {

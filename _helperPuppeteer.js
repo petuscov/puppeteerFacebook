@@ -150,7 +150,8 @@ function writeMessage(page,msg){
 }
 
 /**
-*TODO Indicar en algun sitio info que el usuario de messenger introducido tiene que tener el idioma inglés seleccionado.
+* @param  {Page} - Puppeteer API Page instance.
+* El usuario de messenger introducido tiene que tener el idioma inglés seleccionado.
 **
 * Gets id, name and likes of the bot being analyzed.
 **

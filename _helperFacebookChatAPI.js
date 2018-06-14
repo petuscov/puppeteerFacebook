@@ -6,6 +6,20 @@ const arrUsers = require("./credentials.js").arrUsers;
 const botInteractions = require("./botInteractions.js");
 const botsNames = require("./botsNames.js");
 
+
+
+/**
+ *
+ *  DEPRECATED.
+ * 
+ */
+
+
+
+
+
+
+
 //const connection = require("./connectionMySQL.js");
 
 

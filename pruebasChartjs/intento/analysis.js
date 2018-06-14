@@ -36,6 +36,7 @@ var data = {
 
 socket.on("update",(dataR)=>{
 	data = dataR;
+	destroyCharts();
 	setBasicInfo();
 	Promise.all([
 		setPercentageEmojis(), 
@@ -229,7 +230,7 @@ function setTable(){
 	$('#buttonEquivalent').text(data.reviewedFeatures.buttonEquivalent);
 	$('#helpCommand').text(data.reviewedFeatures.helpCommand);
 	$('#initialButton').text(data.reviewedFeatures.initialButton);
-	$('#admitVariations').text(data.reviewedFeatures.admitVariations);
+	$('#typosHandled').text(data.reviewedFeatures.typosHandled);
 }
 /**
  * Sets chart of multimedia messages
@@ -255,4 +256,17 @@ function setStimatedQuality(percentageEmojis,percentageMultimedia,ponderatedRate
 		ponderatedRate -= (timeForPonderation*5);
 	}
 	$('#stimatedQuality').text(ponderatedRate);
+}
+
+function destroyCharts(){
+	if(messageTimesChart){
+		messageTimesChart.destroy();	
+	}
+	if(emojisChart){
+		emojisChart.destroy();	
+	}
+	if(multimediaChart){
+		multimediaChart.destroy();	
+	}
+	
 }

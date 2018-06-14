@@ -60,16 +60,7 @@ app.get('/Chart.bundle.min.js',function(req,res){
 app.get('/favicon.ico',function(req,res){
     res.sendFile(__dirname + '/res/analyzer.ico');
 });
-
-
 var serv = require('http').Server(app);
-serv.listen(3000,()=>{
-	console.log("listening on 3000.");
-});
-
-
-
-
 
 //WS (actualización de análisis en vivo)
 	
@@ -104,15 +95,17 @@ if(process.argv.length>=3){
         console.log("Just first argument will be used, it must be the bot id/name in facebook messenger."); //TODO incluir enlace a pagina wiki con captura con messenger bot name
     }
 
+    serv.listen(3000,()=>{
+        console.log("listening on 3000.");
+    });
+
     (async function(){
         var app = {url: "http://localhost:3000" };
         var exitCode = await analyzer.analyzeBot(process.argv[2],app); //should save results in db. opens navigator tab.
-        console.log("ended?");
-        console.log(exitCode);
-        //printResults(results);
         return;
     })();
-    return;
+    process.exit();
 }else{
   console.log("Specify name or id of bot to analyze."); //TODO incluir enlace a pagina wiki con captura con messenger bot name
+  process.exit();
 }

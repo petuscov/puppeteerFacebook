@@ -43,6 +43,7 @@ if(process.argv.length>=3){
   return;
 }else{
   console.log("Specify name or id of bot to analyze."); //TODO incluir enlace a pagina wiki con captura con messenger bot name
+  process.exit();
 }
 
 /**
