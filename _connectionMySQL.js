@@ -5,7 +5,7 @@ var connection = mysql.createConnection({
   host     : '127.0.0.1',
   user     : 'root',
   password : 'root',
-  database : 'messengerbots'
+  database : 'messengerbots2'
 });
 
 /*var options = {
@@ -82,16 +82,28 @@ function saveResponse(botId, idMessageSent, multimediaResponse, containsEmojis, 
  * @param  {Object} - data - the data we have about the bot. We can have missing keys inside this object.
  *    @param  {String} - name - bot Name.
  *    @param  {boolean} - connect - if the bot is reachable or not.
- *    @param  {String} - url - url to reach the bot. ("https://www.messenger.com/t/" + botId). ("https://www.messenger.com/t/" + botName) could be valid too, but id is length consistant.
- *    @param  {String} - chatbottleurl - url to chatbottle page of the bot.
  *    @param  {String} - likes - number of bot likes.
- *    @param  {boolean} - ecommerce - boolean indicating if bot can make sales.
- *    @param  {String} - commands - ¿¿TODO??
- */
-function saveBotInfo(id, data){ // commands,){
-	return new Promise(function(resolve,reject){
-		connection.query('Select * from bots where id="' + id +'";', function(error, results, fields){
 
+ */
+function saveBotInfo(botData){ // commands,){
+	return new Promise(function(resolve,reject){
+		connection.query('Select * from bots where id="' + botData.id +'";', function(error, results, fields){
+			
+			//1. Procesamos información del objeto botData para almacenarla.
+			var data = Object.assign({},botData);
+			delete data.messages;
+			for(var key in data.basicInfo){
+				data[key] = data.basicInfo[key];
+			}
+			delete data.basicInfo;
+			for(var key in data.reviewedFeatures){
+				data[key] = data.reviewedFeatures[key];
+			}
+			delete data.reviewedFeatures;
+			data.emojisPercentage = (data.emojis.numYes / data.emojis.numNo + data.emojis.numYes) || 0;
+			delete data.emojis;
+			data.multimediaPercentage = (data.multimedia.numYes / data.multimedia.numNo + data.multimedia.numYes) || 0;
+			delete data.multimedia;
 			var params = [];
 			for(var key in data){
 				params.push(key);
@@ -102,14 +114,15 @@ function saveBotInfo(id, data){ // commands,){
 				if((typeof value !== typeof true)&&(typeof value !== typeof 1)){value = '"'+value+'"';}
 				values.push(value);
 			};
-
+		
+			//2. Almacenamos la información.
 			if(!error){
 				if(!results.length){
 
 					params = params.join(",");
 					values = values.join(",");
 
-					connection.query('insert into bots(id,'+params+') values ("'+id+'",'+values+');', function (error, results, fields) {
+					connection.query('insert into bots('+params+') values ('+values+');', function (error, results, fields) {
 						if (error) {
 						  return connection.rollback(function() {
 							reject(error);
@@ -124,7 +137,7 @@ function saveBotInfo(id, data){ // commands,){
 						keyAndValues.push(params[i]+"= "+values[i]);
 					}
 					keyAndValues = keyAndValues.join(",");
-					connection.query('update bots set '+ keyAndValues +' WHERE id = "'+id+'" ;', function (error, results, fields) {
+					connection.query('update bots set '+ keyAndValues +' WHERE id = "'+botData.id+'" ;', function (error, results, fields) {
 						if (error) {
 						  return connection.rollback(function() {
 							reject();
@@ -139,6 +152,25 @@ function saveBotInfo(id, data){ // commands,){
 	});
 }
 
+function checkBotsTable(){
+	return new Promise(function(resolve,reject){
+		connection.query('Describe bots;', function(error, results, fields){
+			if(error){
+				connection.query('CREATE TABLE bots(id VARCHAR(15) NOT NULL, name VARCHAR(25),likes INT(15),respond TINYINT(1), initialButton TINYINT(1), initialMsgUseful TINYINT(1), helpCommand TINYINT(1),variation TINYINT(1),typosHandled TINYINT(1),buttonEquivalent TINYINT(1), emojisPercentage DECIMAL(2,2),multimediaPercentage DECIMAL(2,2),PRIMARY KEY(id));'
+				,function(error,results,fields){
+					if(error){
+						reject();
+					}else{
+						resolve();
+					}
+				});
+			}else{
+				resolve();
+			}
+		});
+	});
+}
+
 
 function endConnection(){
 	connection.end();
@@ -148,7 +180,8 @@ module.exports = {
 	saveBotInfo : saveBotInfo,
 	endConnection:endConnection,
 	saveMessageSent: saveMessageSent,
-	saveResponse: saveResponse
+	saveResponse: saveResponse,
+	checkBotsTable: checkBotsTable
 };
 //no hace falta realizar connection.connect(), con createConnection vale,
 // y tampoco connection.end() tras cada operación de DB, con realizar una vez al terminar correcto.

@@ -4,7 +4,7 @@ const puppeteer = require("puppeteer");
 //const credentials = require("./credentials.js");
 //const botInteractions = require("./botInteractions.js");
 //const botsNames = require("./botsNames.js");
-//const connection = require("./connectionMySQL.js");
+const mySQLconnection = require("./_connectionMySQL.js");
 //const parser = require("./parser.js");
 
 const events = require('events');
@@ -35,8 +35,14 @@ if(process.argv.length>=3){
   });
 
   (async function(){
-    var results = await analyzer.analyzeBot(process.argv[2],false); //doesnt save results in db.
+    var results = await analyzer.analyzeBot(process.argv[2]); 
     progress.stop();
+
+    //TODO guardado en mysql en función de parámetro. (e.g --save)
+    await mySQLconnection.checkBotsTable();
+    await mySQLconnection.saveBotInfo(results);
+    mySQLconnection.endConnection();
+    
     printResults(results);
     return;
   })();

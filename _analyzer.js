@@ -30,29 +30,28 @@ module.exports = function(eventEmitter){
  */
   module.analyzeBot = async function (nameOrId,app){
     var data = {
-      basicInfo:{//V
+      basicInfo:{
         "name": "", 
         "id": "",
         "likes": "" 
       },
-      messages : [], //V
-      "emojis":{ //V
-        "numYes": 0, //V
-        "numNo": 0 //V
+      respond:"",
+      messages : [], 
+      "emojis":{ 
+        "numYes": 0, 
+        "numNo": 0 
       },
-      "multimedia":{ //V
-        "numYes": 0, //V
-        "numNo": 0 //V
+      "multimedia":{ 
+        "numYes": 0, 
+        "numNo": 0 
       },
       "reviewedFeatures":{
-        "initialButton":"", //V
-        "initialMsgUseful":"", //V
-        "helpCommand":"", //V
-        "variation":"", //V con porcentaje, 3 pruebas diferentes, en random, en hello, en goodbye...
-        "typosHandled":"", //V con porcentaje, 3 pruebas diferentes, en random, en hello, en goodbye...
-        "buttonEquivalent":"", //V
-
-        //"admitsAudioInput":false, grabar un mensaje diciendo hello y comparar con random input. // podría ser interesante, pero intervienen factores puesto que hay que grabar con micro, notificaciones, etc....TODO indicar de cara a trabajo futuro.
+        "initialButton":"", 
+        "initialMsgUseful":"", 
+        "helpCommand":"", 
+        "variation":"", //con porcentaje, 3 pruebas diferentes, en random, en hello, en goodbye...
+        "typosHandled":"", //con porcentaje, 3 pruebas diferentes, en random, en hello, en goodbye...
+        "buttonEquivalent":"", 
       }
     };
     if(app){ //TODO 4 app.
@@ -98,19 +97,21 @@ module.exports = function(eventEmitter){
         //Si el nombre o el id era erróneo se ha redireccionado a www.messenger.com y no hay input para texto mensajes.
         browser.close(); 
         console.log("\nbad id or name provided.");
-        return 1;
+        data.respond = false;
+        return data;
       }
       
     }
     
     var response = await helperPuppeteer.listenBotResponse(page);
-    if(response[0].time === 7000 && response[1].time === 7000){
+    if(response[0].time === helperPuppeteer.maxTimeout && response[1].time === helperPuppeteer.maxTimeout){
       browser.close(); 
       console.log("\nBot doesnt respond.");
-      return 1;
+      data.respond = false;
+      return data;
     }
+    data.respond = true;
     
-   
     // 3. Obtenemos id definitivo, likes, nombre. 
     // (podemos recibir como input tanto nombre del bot como su id, obtener el otro dato y los likes).
     var basicInfo = await helperPuppeteer.getBasicInfo(page);  
@@ -410,6 +411,7 @@ module.exports = function(eventEmitter){
       // 9.1.2 Pulsación botón. (el primero de los disponibles.)
       if(found){
         var buttons = await helperMessages.getButtons(response); 
+        //console.log(buttons);
         var button = buttons[0];//cogemos el primero de los disponibles.
         var pathToButton = button.path;
         await page.click(pathToButton);

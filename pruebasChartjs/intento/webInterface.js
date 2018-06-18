@@ -12,35 +12,10 @@ var analyzer = require('./../../_analyzer.js')();
 
 var opn = require('opn');
 
-const saltRounds = 10;
-
-//var mysqlEvents = require('mysql-events'); //TODO para actualizado de analisis en vivo
-var mysql      = require('mysql');
-var connection = mysql.createConnection({
-  host     : '127.0.0.1',
-  user     : 'root',
-  password : 'root',
-  database : 'messengerbots' //podemos usar una db distinta a la del analizador.
-});
-
 var express = require('express');
 var app = express();
 
-//passport mw.
-//app.use(passport.session({ secret: 'anything' }));
-app.use(cookieParser()) //?
-app.use(session({ 
-    secret: 'anything',
-    resave: true,
-    saveUninitialized: true 
-}));
-//app.use(passport.initialize());
-//app.use(passport.session());
 
-app.use(bodyParser.json()); 
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
 
 app.get("/",function(req,res){
 	res.sendFile(__dirname + '/analysis.html');   
@@ -96,15 +71,17 @@ if(process.argv.length>=3){
     }
 
     serv.listen(3000,()=>{
-        console.log("listening on 3000.");
+        (async function(){
+
+        
+            console.log("listening on 3000.");
+            var app = {url: "http://localhost:3000" };
+            var exitCode = await analyzer.analyzeBot(process.argv[2],app); //should save results in db. opens navigator tab.
+            process.exit();
+        })();
     });
 
-    (async function(){
-        var app = {url: "http://localhost:3000" };
-        var exitCode = await analyzer.analyzeBot(process.argv[2],app); //should save results in db. opens navigator tab.
-        return;
-    })();
-    process.exit();
+        
 }else{
   console.log("Specify name or id of bot to analyze."); //TODO incluir enlace a pagina wiki con captura con messenger bot name
   process.exit();
