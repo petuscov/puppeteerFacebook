@@ -1,10 +1,9 @@
 'use strict'
-//TODO ponernos con esto tras puppeteer mensajes pulido.
 var mysql      = require('mysql');
 var connection = mysql.createConnection({
   host     : '127.0.0.1',
-  user     : 'root',
-  password : 'root',
+  user     : process.env.DB_USERNAME,
+  password : process.env.DB_PASSWORD,
   database : 'messengerbots2'
 });
 
@@ -86,6 +85,7 @@ function saveResponse(botId, idMessageSent, multimediaResponse, containsEmojis, 
 
  */
 function saveBotInfo(botData){ // commands,){
+	//TODO botData.respond, cuando no responde (50cent), datos no se almacenan correctamente.
 	return new Promise(function(resolve,reject){
 		connection.query('Select * from bots where id="' + botData.id +'";', function(error, results, fields){
 			
@@ -97,13 +97,18 @@ function saveBotInfo(botData){ // commands,){
 			}
 			delete data.basicInfo;
 			for(var key in data.reviewedFeatures){
-				data[key] = data.reviewedFeatures[key];
+				if(data.reviewedFeatures[key] !== ""){
+					data[key] = data.reviewedFeatures[key];
+				}else{
+					data[key] = null;
+				}
 			}
 			delete data.reviewedFeatures;
 			data.emojisPercentage = (data.emojis.numYes / data.emojis.numNo + data.emojis.numYes) || 0;
 			delete data.emojis;
 			data.multimediaPercentage = (data.multimedia.numYes / data.multimedia.numNo + data.multimedia.numYes) || 0;
 			delete data.multimedia;
+			
 			var params = [];
 			for(var key in data){
 				params.push(key);
@@ -111,10 +116,9 @@ function saveBotInfo(botData){ // commands,){
 			var values = [];
 			for(var key in data){
 				var value = data[key];
-				if((typeof value !== typeof true)&&(typeof value !== typeof 1)){value = '"'+value+'"';}
+				if((typeof value !== typeof true)&&(typeof value !== typeof 1)&&(typeof value !== typeof null)){value = '"'+value+'"';}
 				values.push(value);
 			};
-		
 			//2. Almacenamos la información.
 			if(!error){
 				if(!results.length){

@@ -1,5 +1,5 @@
 "use strict";
-
+require('dotenv').config();
 const puppeteer = require("puppeteer");
 //const credentials = require("./credentials.js");
 //const botInteractions = require("./botInteractions.js");

@@ -71,8 +71,8 @@ module.exports = function(eventEmitter){
     var stackToButtons;
 
 
-    const browser = await puppeteer.launch({
-        executablePath:"./node_modules/chromium/lib/chromium/chrome-linux/chrome",// parámetros necesarios en linux.
+    const browser = await puppeteer.launch({// parámetros necesarios en linux.
+        executablePath:process.env.EXECUTABLE_PATH_PUPPETEER || './node_modules/chromium/lib/chromium/chrome-linux/chrome',
         headless: true
       });
     const page = await browser.newPage(); 
@@ -81,7 +81,7 @@ module.exports = function(eventEmitter){
     page.on('console', (msg)=>{if(msg._text){console.log(msg._text);}else{console.log(msg);}});
 
 
-    await helperPuppeteer.loginWithUser(credentials.username,credentials.password,page);
+    await helperPuppeteer.loginWithUser(process.env.FB_USERNAME,process.env.FB_PASSWORD,page);
     // 1. Cerramos todas las convesaciones existentes que tenga el usuario introducido. (Nos aseguramos de que no tenga ninguna activa)
     await helperPuppeteer.closeAllBotConversations(page); 
     // 2. Pulsamos botón getStarted.
@@ -89,7 +89,6 @@ module.exports = function(eventEmitter){
       await helperPuppeteer.startBotConversation(nameOrId,page);
       data.reviewedFeatures.initialButton = true;
     } catch(err) {
-      await page.screenshot({path: "./startConv/"+nameOrId+"-notInitialButton.png"}); //temporal.
       data.reviewedFeatures.initialButton = false;
       try{
         await helperPuppeteer.writeMessage(page, "Hello"); 
@@ -97,12 +96,15 @@ module.exports = function(eventEmitter){
         //Si el nombre o el id era erróneo se ha redireccionado a www.messenger.com y no hay input para texto mensajes.
         browser.close(); 
         console.log("\nbad id or name provided.");
-        data.respond = false;
-        return data;
+        process.exit(); // No devolvemos objeto data puesto que no se va a guardar nada en BD. nombre era erróneo.
       }
       
     }
     
+    // 3. Obtenemos id definitivo, likes, nombre. 
+    // (podemos recibir como input tanto nombre del bot como su id, obtener el otro dato y los likes).
+    var basicInfo = await helperPuppeteer.getBasicInfo(page);  
+    Object.assign(data.basicInfo,basicInfo);
     var response = await helperPuppeteer.listenBotResponse(page);
     if(response[0].time === helperPuppeteer.maxTimeout && response[1].time === helperPuppeteer.maxTimeout){
       browser.close(); 
@@ -112,11 +114,6 @@ module.exports = function(eventEmitter){
     }
     data.respond = true;
     
-    // 3. Obtenemos id definitivo, likes, nombre. 
-    // (podemos recibir como input tanto nombre del bot como su id, obtener el otro dato y los likes).
-    var basicInfo = await helperPuppeteer.getBasicInfo(page);  
-    Object.assign(data.basicInfo,basicInfo);
-
     // 4.@ no hacemos uso de facebook-chat-api. 
     // Cerramos conversación, para volverla a iniciarla escuchando la respuesta.
     await helperPuppeteer.closeCurrentBotConversation(page); 
@@ -384,7 +381,7 @@ module.exports = function(eventEmitter){
 
     // 9. Comparaciones pulsación boton envio texto.
     if(!stackToButtons){
-      data.reviewedFeatures.buttonEquivalent = "No button detected.";
+      data.reviewedFeatures.buttonEquivalent = false;//thinking in db storage. //"No button detected.";
     }else{
       // 9.1.1 Búsqueda botón (para pulsación).
       var copyOfStack = stackToButtons.slice();

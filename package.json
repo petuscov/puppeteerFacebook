@@ -6,6 +6,7 @@
   "dependencies": {
     "chromium": "^1.0.2",
     "clui": "^0.3.6",
+    "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "facebook-chat-api": "^1.5.1",
     "melanke-watchjs": "^1.4.3",
@@ -18,10 +19,6 @@
     "analyze": "node _mainAnalyzer.js",
     "visual_analysis": "node pruebasChartjs/intento/webInterface.js",
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "credentials" : {
-    "username" :"josubenaventegarcia@spainmail.com",
-    "password":"prueba1Prueba@"
   },
   "author": "",
   "license": "ISC"

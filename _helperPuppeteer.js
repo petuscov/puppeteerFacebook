@@ -1,4 +1,5 @@
 "use strict";
+require('dotenv').config();
 const puppeteer = require("puppeteer");
 const maxTimeout = 7000;
 /**
