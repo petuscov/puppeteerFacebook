@@ -337,24 +337,30 @@ function listenBotResponse(page){
           return arrObjs;
         }
 
-        function getPath(node,temp) { 
+        function getPath(el,temp) { 
 
-          var el = node;
-          if (!(el instanceof Element)) return;
+          if (!(el instanceof Element)){
+            return;
+          }
           var path = [];
           while (el.nodeType === Node.ELEMENT_NODE) {
-              var selector = el.nodeName.toLowerCase();
-              if (el.id) {
-                  selector += '#' + el.id;
-              } else {
-                  var sib = el, nth = 1;
-                  while (sib.nodeType === Node.ELEMENT_NODE && (sib = sib.previousSibling) && nth++);
-                  selector += ":nth-child("+nth+")";
-              }
-              path.unshift(selector);
-              el = el.parentNode;
+            var selector = el.nodeName.toLowerCase();
+            if (el.id) {
+                selector += '#' + el.id;
+                path.unshift(selector);
+                break;
+            } else {
+                var sib = el, nth = 1;
+                while (sib = sib.previousElementSibling) {
+                    if (sib.nodeName.toLowerCase() == selector)
+                       nth++;
+                }
+                if (nth != 1)
+                    selector += ":nth-of-type("+nth+")";
+            }
+            path.unshift(selector);
+            el = el.parentNode;
           }
-          //if(temp){return "yay";} //temporal.
           return path.join(" > ");
         }
 

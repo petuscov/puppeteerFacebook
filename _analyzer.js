@@ -31,27 +31,27 @@ module.exports = function(eventEmitter){
   module.analyzeBot = async function (nameOrId,app){
     var data = {
       basicInfo:{
-        "name": "", 
-        "id": "",
-        "likes": "" 
+        name: "", 
+        id: "",
+        likes: "" 
       },
       respond:"",
       messages : [], 
-      "emojis":{ 
-        "numYes": 0, 
-        "numNo": 0 
+      emojis:{ 
+        numYes: 0, 
+        numNo: 0 
       },
-      "multimedia":{ 
-        "numYes": 0, 
-        "numNo": 0 
+      multimedia:{ 
+        numYes: 0, 
+        numNo: 0 
       },
-      "reviewedFeatures":{
-        "initialButton":"", 
-        "initialMsgUseful":"", 
-        "helpCommand":"", 
-        "variation":"", //con porcentaje, 3 pruebas diferentes, en random, en hello, en goodbye...
-        "typosHandled":"", //con porcentaje, 3 pruebas diferentes, en random, en hello, en goodbye...
-        "buttonEquivalent":"", 
+      reviewedFeatures:{
+        initialButton:"", 
+        initialMsgUseful:"", 
+        helpCommand:"", 
+        variation:"", //con porcentaje, 3 pruebas diferentes, en random, en hello, en goodbye...
+        typosHandled:"", //con porcentaje, 3 pruebas diferentes, en random, en hello, en goodbye...
+        buttonEquivalent:"", 
       }
     };
     if(app){ //TODO 4 app.
@@ -422,10 +422,10 @@ module.exports = function(eventEmitter){
         var message = copyOfStack.shift();
         if(message==="%initialMessage%"){
           // Cerramos conversación, para volverla a iniciarla escuchando la respuesta.
-          //console.log("close attemp.");
-          await page.screenshot({path: "./GUETTA-IMPORTANT.png"});
+          
+          //await page.screenshot({path: "./GUETTA-IMPORTANT.png"});
           await helperPuppeteer.closeCurrentBotConversation(page); 
-          //console.log("yay");
+          
           try{
             await helperPuppeteer.startBotConversation(nameOrId,page);
           } catch (err) {
@@ -451,8 +451,12 @@ module.exports = function(eventEmitter){
       }
       
       data.reviewedFeatures.buttonEquivalent = messageButtonTextTyped===messageButtonPressed;
+
     }
 
+    await delay(3000);
+    
+    
     browser.close(); 
 
     return data;
@@ -467,7 +471,11 @@ module.exports = function(eventEmitter){
 
 
 
-
+function delay(timeout) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, timeout);
+  });
+}
 
 
 

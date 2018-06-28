@@ -14,16 +14,13 @@
 	<script src="./Chart.bundle.min.js"></script>
 	<link rel="shortcut icon" type="image/svg" href="./res/analysis.svg"/>
 	<!--<link rel="shortcut icon" href="./res/analysis.ico"/>--><!--<link rel="icon" href="./analysis.ico">-->
-	<!--<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>-->
+	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 	<link type="text/css" rel='stylesheet' href='analysis.css'></link>
 	<script src="./analysis.js"></script>
 </head>
 
 <body>
-	<div>
-		<button id='logout'>Log Out</button>
-	</div>
-	<div>
+	<div class = 'main-div'>
 		<div class='basic-info'>
 			<div class='basic-info-element'>
 				<h5>Bot name: </h5><div id="botName"></div> 
@@ -34,27 +31,27 @@
 			<div class='basic-info-element'>
 				<h5>Bot likes: </h5><div id="botLikes"></div>
 			</div> 
-			<div class='basic-info-element'>
+			<!--<div class='basic-info-element' hidden="true">
 				<h5>Stimated quality: </h5><div id="stimatedQuality"></div>  
-				<div class="help-tip">
+				<div class="help-tip" >
 					<p>This reflects the bot overall qualification. All other measures have influence over this.</p>
 				</div>
-			</div> 
+			</div> -->
 		</div>
-		<div class='times-chart'>
-			<div>
+		<div class='container'>
+			<div class='times-chart'>
 				<canvas id="timesChart" width="400" height="400"></canvas>
-				Tiempo medio:<div id="meanTime"></div>
+				Average response time:<div id="meanTime"></div>
 			</div>
-		</div>
-		<div>
-			<div>
-				<canvas id="emojisChart" width="100" height="100"></canvas>
-				Porcentaje emojis:<div id="emojisPercentage"></div>
-			</div>
-			<div>
-				<canvas id="multimediaChart" width="100" height="100"></canvas><div></div>
-				Porcentaje mensajes multimedia:<div id="multimediaPercentage"></div>
+			<div class='charts-container'>
+				<div class='chart'>
+					<canvas id="emojisChart" width="100" height="100"></canvas>
+					Percentage of emojis:<div id="emojisPercentage"></div>
+				</div>
+				<div class='chart'>
+					<canvas id="multimediaChart" width="100" height="100"></canvas><div></div>
+					Percentage of multimedia messages:<div id="multimediaPercentage"></div>
+				</div>
 			</div>
 		</div>
 		<div>
@@ -62,41 +59,52 @@
 			  <tr>
 			    <th>Feature</th> 
 			    <th>Review</th>
+			    <th>Tip</th>
 			  </tr>
 			  <tr>
 			    <td>Variation</td> 
-			    	<div class="help-tip">
+			    <td id='variation'></td>
+			    <td>
+			     	<div class="help-tip">
     				<p>Variation indicates if bot changes its responses before an user sending the same text multiple times.</p>
 					</div>
-			    <td id='variation'></td>
+			    </td>
 			  </tr>
 			  <tr>
 			    <td>Button equivalent</td> 
+			     <td id='buttonEquivalent'></td>
+			    <td>
 			    	<div class="help-tip">
     				<p>This reflects if pressing a button and sending the button content as a message is handled both ways equally by the bot.</p>
 					</div>
-			    <td id='buttonEquivalent'></td>
+				</td>
 			  </tr>
 			  <tr>
 			    <td>Help command</td> 
+			    <td id='helpCommand'></td>
+			    <td>
 			    	<div class="help-tip">
     				<p>Is a Help command available? Is help provided before a 'help' message?</p>
 					</div>
-			    <td id='helpCommand'></td>
+			    </td>
 			  </tr>
 			  <tr>
 			    <td>Initial button</td> 
-			    <div class="help-tip">
-    				<p>Is an initial button 'Get Started' shown prior to starting a conversation?</p>
-				</div>
 			    <td id='initialButton'></td>
+			    <td>
+				    <div class="help-tip">
+	    			<p>Is an initial button 'Get Started' shown prior to starting a conversation?</p>
+					</div>
+			    </td> 
 			  </tr>
 			  <tr>
 			    <td>Admit variations</td> 
-			    <div class="help-tip">
-    				<p>Does the bot supports variation in input? Misspelled words, missing characters, etc.</p>
-				</div>
-			    <td id='admitVariations'></td>
+			    <td id='typosHandled'></td>
+			    <td>
+				    <div class="help-tip">
+	    				<p>Does the bot supports variation in input? Misspelled words, missing characters, etc.</p>
+					</div>
+			    </td>
 			  </tr>
 			  <!--<tr>
 			    <td>Variation</td> <span>?</span> 

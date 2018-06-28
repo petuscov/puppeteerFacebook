@@ -1,14 +1,9 @@
 "use strict";
 require('dotenv').config();
+
 var http = require("http");
-var fileSystem = require('fs');
-var path = require('path');
-var bodyParser = require('body-parser');
-var bcrypt = require('bcrypt-nodejs');
-//var passport = require('passport');
-var session = require('express-session');
-var cookieParser = require('cookie-parser');
-var analyzer = require('./../../_analyzer.js')();
+
+var analyzer = require('./../_analyzer.js')();
 
 var opn = require('opn');
 
@@ -35,7 +30,7 @@ app.get('/Chart.bundle.min.js',function(req,res){
 app.get('/favicon.ico',function(req,res){
     res.sendFile(__dirname + '/res/analyzer.ico');
 });
-var serv = require('http').Server(app);
+var serv = http.Server(app);
 
 //WS (actualización de análisis en vivo)
 	

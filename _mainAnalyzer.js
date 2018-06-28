@@ -39,6 +39,7 @@ if(process.argv.length>=3){
     progress.stop();
 
     //TODO guardado en mysql en función de parámetro. (e.g --save)
+    
     await mySQLconnection.checkBotsTable();
     await mySQLconnection.saveBotInfo(results);
     mySQLconnection.endConnection();

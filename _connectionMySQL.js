@@ -87,8 +87,9 @@ function saveResponse(botId, idMessageSent, multimediaResponse, containsEmojis, 
 function saveBotInfo(botData){ // commands,){
 	//TODO botData.respond, cuando no responde (50cent), datos no se almacenan correctamente.
 	return new Promise(function(resolve,reject){
-		connection.query('Select * from bots where id="' + botData.id +'";', function(error, results, fields){
-			
+
+		if(botData.respond){
+
 			//1. Procesamos información del objeto botData para almacenarla.
 			var data = Object.assign({},botData);
 			delete data.messages;
@@ -119,40 +120,93 @@ function saveBotInfo(botData){ // commands,){
 				if((typeof value !== typeof true)&&(typeof value !== typeof 1)&&(typeof value !== typeof null)){value = '"'+value+'"';}
 				values.push(value);
 			};
-			//2. Almacenamos la información.
-			if(!error){
-				if(!results.length){
 
-					params = params.join(",");
-					values = values.join(",");
+			connection.query('Select * from bots where id="' + data.id +'";', function(error, results, fields){
+				//2. Almacenamos la información.
+				if(!error){
+					if(!results.length){
 
-					connection.query('insert into bots('+params+') values ('+values+');', function (error, results, fields) {
-						if (error) {
-						  return connection.rollback(function() {
-							reject(error);
-						  });
-						}else{
-							resolve();
+						params = params.join(",");
+						values = values.join(",");
+
+						connection.query('insert into bots('+params+') values ('+values+');', function (error, results, fields) {
+							if (error) {
+							  return connection.rollback(function() {
+								reject(error);
+							  });
+							}else{
+								resolve();
+							}
+						});
+					}else{
+						var keyAndValues =[];
+						for(var i=0;i<params.length;i++){
+							keyAndValues.push(params[i]+"= "+values[i]);
 						}
-					});
-				}else{
-					var keyAndValues =[];
-					for(var i=0;i<params.length;i++){
-						keyAndValues.push(params[i]+"= "+values[i]);
+						keyAndValues = keyAndValues.join(",");
+						connection.query('update bots set '+ keyAndValues +' WHERE id = "'+data.id+'" ;', function (error, results, fields) {
+							if (error) {
+							  return connection.rollback(function() {
+								reject();
+							  });
+							}else{
+								resolve();
+							}
+						});
 					}
-					keyAndValues = keyAndValues.join(",");
-					connection.query('update bots set '+ keyAndValues +' WHERE id = "'+botData.id+'" ;', function (error, results, fields) {
-						if (error) {
-						  return connection.rollback(function() {
-							reject();
-						  });
-						}else{
-							resolve();
-						}
-					});
 				}
+			});
+		}else{
+			//1. Procesamos información básica del objeto botData para almacenarla. El resto de campos se ignoran pues el bot no responde.
+			var data = Object.assign({},botData.basicInfo);
+			data.respond = false;
+			data.initialButton = botData.reviewedFeatures.initialButton;
+			var params = [];
+			for(var key in data){
+				params.push(key);
 			}
-		});
+			var values = [];
+			for(var key in data){
+				var value = data[key];
+				if((typeof value !== typeof true)&&(typeof value !== typeof 1)&&(typeof value !== typeof null)){value = '"'+value+'"';}
+				values.push(value);
+			};			
+
+			connection.query('Select * from bots where id="' + data.id +'";', function(error, results, fields){
+				//2. Almacenamos la información.
+				if(!error){
+					console.log(results.length);
+					if(!results.length){
+						params = params.join(",");
+						values = values.join(",");
+						connection.query('insert into bots('+params+') values ('+values+');', function (error, results, fields) {
+							if (error) {
+							  return connection.rollback(function() {
+								reject(error);
+							  });
+							}else{
+								resolve();
+							}
+						});
+					}else{
+						var keyAndValues =[];
+						for(var i=0;i<params.length;i++){
+							keyAndValues.push(params[i]+"= "+values[i]);
+						}
+						keyAndValues = keyAndValues.join(",");
+						connection.query('update bots set '+ keyAndValues +' WHERE id = "'+data.id+'" ;', function (error, results, fields) {
+							if (error) {
+							  return connection.rollback(function() {
+								reject();
+							  });
+							}else{
+								resolve();
+							}
+						});
+					}
+				}
+			});
+		}
 	});
 }
 

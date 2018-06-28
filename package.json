@@ -1,5 +1,5 @@
 {
-  "name": "puppeteer",
+  "name": "puppeteerAnalyzer",
   "version": "1.0.0",
   "description": "",
   "main": "indexFacebook.js",
@@ -17,7 +17,7 @@
   "devDependencies": {},
   "scripts": {
     "analyze": "node _mainAnalyzer.js",
-    "visual_analysis": "node pruebasChartjs/intento/webInterface.js",
+    "visual_analysis": "node webInterface/webInterface.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
