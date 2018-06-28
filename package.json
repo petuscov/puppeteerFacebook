@@ -16,7 +16,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "analyze": "node _mainAnalyzer.js",
+    "analysis": "node _mainAnalyzer.js",
     "visual_analysis": "node webInterface/webInterface.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
