@@ -38,11 +38,11 @@ if(process.argv.length>=3){
     var results = await analyzer.analyzeBot(process.argv[2]); 
     progress.stop();
 
-    //TODO guardado en mysql en función de parámetro. (e.g --save)
+    //guardado en mysql en función de parámetro. (e.g --save)
     
-    await mySQLconnection.checkBotsTable();
-    await mySQLconnection.saveBotInfo(results);
-    mySQLconnection.endConnection();
+    //await mySQLconnection.checkBotsTable();
+    //await mySQLconnection.saveBotInfo(results);
+    //mySQLconnection.endConnection();
     
     printResults(results);
     return;

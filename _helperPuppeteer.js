@@ -429,8 +429,7 @@ function listenBotResponse(page){
             var mutationObserver = new MutationObserver(callback);
             mutationObserver.observe(messagesBox, { childList: true});
 
-            //TODOTODOTODOTODOTODOTODOTODO CNN ALGUNA FORMA!!
-            var endCallback = ()=>{ //TODO esperar más tiempo si se ha recibido un mensaje. recepción msg => esperar 3 secs desde él.
+            var endCallback = ()=>{ //convendr. esperar más tiempo si se ha recibido un mensaje. recepción msg => esperar 3 secs desde él.
               var lastMsgInterval = new Date()-last;
               //console.log(lastMsgInterval);
               if(lastMsgInterval<1000){ // si han pasado menos de 3 segundos

@@ -414,6 +414,7 @@ module.exports = function(eventEmitter){
         await page.click(pathToButton);
         var response = await helperPuppeteer.listenBotResponse(page); 
         var messageButtonPressed = helperMessages.getText(response) || "";
+        //console.log("response: "+response);
       }
       // 9.2.1 Búsqueda botón. (para escritura mensaje.)
       var copyOfStack = stackToButtons.slice();
@@ -424,8 +425,14 @@ module.exports = function(eventEmitter){
           // Cerramos conversación, para volverla a iniciarla escuchando la respuesta.
           
           //await page.screenshot({path: "./GUETTA-IMPORTANT.png"});
-          await helperPuppeteer.closeCurrentBotConversation(page); 
-          
+          try{
+            await helperPuppeteer.closeCurrentBotConversation(page); 
+          } catch (e) {
+            console.log("err"+e);
+            var mouse = page.mouse;
+            await mouse.click(0,0);
+            await helperPuppeteer.closeCurrentBotConversation(page);
+          }
           try{
             await helperPuppeteer.startBotConversation(nameOrId,page);
           } catch (err) {
